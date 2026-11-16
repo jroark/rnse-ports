@@ -248,8 +248,10 @@ unit once, on Linux's way back (`docs/linux.md`), and the emulator
 counts an `ocbp` as one cycle, which a unit evidently does not.  The
 same build also has the kit's exception screen
 (`unexpected`, `sdk/src/common.c`: the exception's code and PC on the
-screen, the watchdog served for half a minute; before, an exception
-was a dark reset, indistinguishable from the watchdog's), the game's
+screen until the watchdog resets the unit into its own software,
+which keeps eject working; holding the screen up for half a minute by
+serving the watchdog from it was tried and taken out again, since it
+left eject and the display key dead for as long), the game's
 `DOOM IS STARTING` at its first instruction, and `pcm.c` reading a DMA
 channel's control register before it clears the end flag, as the SH-4
 manual wants.  `-DRNSE_TEST_FAULT` in `EXTRA_CFLAGS` builds a game that
