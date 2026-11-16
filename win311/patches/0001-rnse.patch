@@ -1,0 +1,427 @@
+diff --git a/i386.c b/i386.c
+index 495b455..e864794 100644
+--- a/i386.c
++++ b/i386.c
+@@ -32,11 +32,20 @@ typedef void FPU;
+ 
+ struct CPUI386 {
+ #ifdef I386_OPT1
++#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++	/* the low half and its two bytes where a big-endian host keeps them */
++	union {
++		u32 r32;
++		struct { u16 hi16, r16; };
++		struct { u8 b3, b2, h8, l8; };
++	} gprx[8];
++#else
+ 	union {
+ 		u32 r32;
+ 		u16 r16;
+ 		u8 r8[2];
+ 	} gprx[8];
++#endif
+ #else
+ 	uword gpr[8];
+ #endif
+@@ -237,7 +246,51 @@ static inline void pstore8(CPUI386 *cpu, uword addr, u8 val)
+ 	cpu->phys_mem[addr] = val;
+ }
+ 
+-#ifdef I386_OPT1
++#if defined(I386_OPT1) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++/* A big-endian host (the RNS-E's SH-4): words of guest memory are kept as
++   the guest has them, little-endian, and turned round on the way; an
++   aligned word in one load and a swap, the rest a byte at a time. */
++static inline u16 pload16(CPUI386 *cpu, uword addr)
++{
++	u8 *mem = (u8 *) cpu->phys_mem;
++	if (!(addr & 1))
++		return __builtin_bswap16(*(u16 *)&mem[addr]);
++	return mem[addr] | (mem[addr + 1] << 8);
++}
++
++static inline u32 pload32(CPUI386 *cpu, uword addr)
++{
++	u8 *mem = (u8 *) cpu->phys_mem;
++	if (!(addr & 3))
++		return __builtin_bswap32(*(u32 *)&mem[addr]);
++	return mem[addr] | (mem[addr + 1] << 8) |
++		(mem[addr + 2] << 16) | ((u32) mem[addr + 3] << 24);
++}
++
++static inline void pstore16(CPUI386 *cpu, uword addr, u16 val)
++{
++	u8 *mem = (u8 *) cpu->phys_mem;
++	if (!(addr & 1)) {
++		*(u16 *)&mem[addr] = __builtin_bswap16(val);
++		return;
++	}
++	mem[addr] = val;
++	mem[addr + 1] = val >> 8;
++}
++
++static inline void pstore32(CPUI386 *cpu, uword addr, u32 val)
++{
++	u8 *mem = (u8 *) cpu->phys_mem;
++	if (!(addr & 3)) {
++		*(u32 *)&mem[addr] = __builtin_bswap32(val);
++		return;
++	}
++	mem[addr] = val;
++	mem[addr + 1] = val >> 8;
++	mem[addr + 2] = val >> 16;
++	mem[addr + 3] = val >> 24;
++}
++#elif defined(I386_OPT1)
+ /* only works on hosts that are little-endian; where unaligned loads and
+    stores trap or are slow, the packed accesses below let the compiler take
+    them apart (on MIPS always, elsewhere with -DI386_ALIGNED_ONLY) */
+@@ -1670,9 +1723,14 @@ static inline void clear_segs(CPUI386 *cpu)
+ 	}
+ 
+ #define limm(i) i
+-#ifdef I386_OPT1
++#if defined(I386_OPT1) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++#define lreg8(i) ((i) > 3 ? cpu->gprx[i - 4].h8 : cpu->gprx[i].l8)
++#define sreg8(i, v) ((i) > 3 ? (cpu->gprx[i - 4].h8 = (v)) : (cpu->gprx[i].l8 = (v)))
++#else
+ #define lreg8(i) ((i) > 3 ? cpu->gprx[i - 4].r8[1] : cpu->gprx[i].r8[0])
+ #define sreg8(i, v) ((i) > 3 ? (cpu->gprx[i - 4].r8[1] = (v)) : (cpu->gprx[i].r8[0] = (v)))
++#endif
++#ifdef I386_OPT1
+ #define lreg16(i) (cpu->gprx[i].r16)
+ #define sreg16(i, v) (cpu->gprx[i].r16 = (v))
+ #define lreg32(i) (REGi(i))
+@@ -3841,10 +3899,15 @@ static bool verrw_helper(CPUI386 *cpu, int sel, int wr, int *zf)
+ #include <time.h>
+ static uint64_t get_nticks()
+ {
++#ifdef RNSE
++	extern uint32_t get_uticks();
++	return (uint64_t)get_uticks() * 1000;
++#else
+ 	struct timespec ts;
+ 	clock_gettime(CLOCK_MONOTONIC, &ts);
+ 	return ((uint64_t) ts.tv_sec * 1000000000ull +
+ 		(uint64_t) ts.tv_nsec);
++#endif
+ }
+ 
+ #define RDTSC() \
+@@ -5385,7 +5448,7 @@ int cpui386_get_excno(CPUI386 *cpu)
+ 	return cpu->excno;
+ }
+ 
+-#if !defined(_WIN32) && !defined(__wasm__)
++#if !defined(_WIN32) && !defined(__wasm__) && !defined(RNSE)
+ void cpui386_set_verbose() // for debugging
+ {
+ 	verbose = true;
+diff --git a/ide.c b/ide.c
+index 2f5423e..527e886 100644
+--- a/ide.c
++++ b/ide.c
+@@ -417,10 +417,11 @@ static void padstr8(uint8_t *buf, int buf_size, const char *src)
+     }
+ }
+ 
+-/* little endian assume */
++/* the drive's words little-endian, whatever the host */
+ static void stw(uint16_t *buf, int v)
+ {
+-    *buf = v;
++    ((uint8_t *)buf)[0] = v;
++    ((uint8_t *)buf)[1] = v >> 8;
+ }
+ 
+ static void ide_identify(IDEState *s)
+@@ -2351,9 +2352,48 @@ IDEIFState *ide_allocate(int irq, void *pic, void (*set_irq)(void *pic, int irq,
+     return s;
+ }
+ 
++#ifdef RNSE
++/* The RNS-E's port (win311/port/disk.c): a disk image on an SD card,
++   read as it is needed and kept in RAM, written to RAM only. */
++int64_t rnse_disk_sectors(const char *filename);
++int rnse_disk_read(const char *filename, uint64_t sector, uint8_t *buf, int n);
++int rnse_disk_write(const char *filename, uint64_t sector, const uint8_t *buf, int n);
++
++static int64_t rnse_get_sector_count(BlockDevice *bs)
++{
++    return rnse_disk_sectors(bs->opaque);
++}
++
++static int rnse_read_async(BlockDevice *bs, uint64_t sector_num, uint8_t *buf,
++                           int n, BlockDeviceCompletionFunc *cb, void *opaque)
++{
++    return rnse_disk_read(bs->opaque, sector_num, buf, n);
++}
++
++static int rnse_write_async(BlockDevice *bs, uint64_t sector_num,
++                            const uint8_t *buf, int n,
++                            BlockDeviceCompletionFunc *cb, void *opaque)
++{
++    return rnse_disk_write(bs->opaque, sector_num, buf, n);
++}
++
++static BlockDevice *block_device_init_rnse(const char *filename)
++{
++    BlockDevice *bs = pcmalloc(sizeof(*bs));
++    memset(bs, 0, sizeof(*bs));
++    bs->opaque = (void *)filename;
++    bs->get_sector_count = rnse_get_sector_count;
++    bs->read_async = rnse_read_async;
++    bs->write_async = rnse_write_async;
++    return bs;
++}
++#endif
++
+ int ide_attach(IDEIFState *s, int drive, const char *filename)
+ {
+-#ifdef BUILD_ESP32
++#if defined(RNSE)
++    BlockDevice *bs = block_device_init_rnse(filename);
++#elif defined(BUILD_ESP32)
+     BlockDevice *bs;
+     if (strcmp(filename, "/dev/mmcblk0") == 0) {
+         bs = block_device_init_espsd(0, -1);
+diff --git a/misc.c b/misc.c
+index 55ec0c9..9aac341 100644
+--- a/misc.c
++++ b/misc.c
+@@ -7,7 +7,25 @@
+ #include <errno.h>
+ #include <stdio.h>
+ 
+-#ifndef BUILD_ESP32
++#if defined(RNSE)
++/* The RNS-E (win311/port): no terminal; the clock is the port's. */
++void CaptureKeyboardInput()
++{
++}
++
++static int ReadKBByte()
++{
++	return -1;
++}
++
++static int IsKBHit()
++{
++	return 0;
++}
++
++void rnse_tm(struct tm *tm);
++uint32_t get_uticks();
++#elif !defined(BUILD_ESP32)
+ #if !defined(_WIN32) && !defined(__wasm__)
+ #include <sys/ioctl.h>
+ #include <termios.h>
+@@ -124,7 +142,10 @@ static void cmos_update_time(CMOS *s)
+ 	time_t ti;
+ 
+ 	ti = time(NULL);
+-#ifndef _WIN32
++#if defined(RNSE)
++	(void) ti;
++	rnse_tm(&tm);
++#elif !defined(_WIN32)
+ 	gmtime_r(&ti, &tm);
+ #else
+ 	gmtime_s(&tm, &ti);
+@@ -227,7 +248,7 @@ void u8250_reg_write(U8250 *uart, int off, uint8_t val)
+ 			uart->dll = val;
+ 			break;
+ 		} else {
+-#ifndef __wasm__
++#if !defined(__wasm__) && !defined(RNSE)
+ 			ssize_t r;
+ 			do {
+ 				r = write(uart->out_fd, &val, 1);
+@@ -285,11 +306,15 @@ void u8250_update(U8250 *uart)
+ 
+ static uint32_t cmos_get_timer(CMOS *s)
+ {
++#ifdef RNSE
++	return (uint32_t)((uint64_t)get_uticks() * CMOS_FREQ / 1000000);
++#else
+ 	struct timespec ts;
+ 
+ 	clock_gettime(CLOCK_MONOTONIC, &ts);
+ 	return (uint32_t)ts.tv_sec * CMOS_FREQ +
+ 		((uint64_t)ts.tv_nsec * CMOS_FREQ / 1000000000);
++#endif
+ }
+ 
+ static void cmos_update_timer(CMOS *s)
+diff --git a/pc.c b/pc.c
+index 5073c5f..f466e79 100644
+--- a/pc.c
++++ b/pc.c
+@@ -680,7 +680,7 @@ static void iomem_write16(void *iomem, uword addr, u16 val)
+ 	if (addr >= vga_addr2) {
+ 		addr -= vga_addr2;
+ 		if (addr + 1 < pc->vga_mem_size)
+-			*(uint16_t *)&(pc->vga_mem[addr]) = val;
++			{ pc->vga_mem[addr] = val; pc->vga_mem[addr + 1] = val >> 8; }
+ 		return;
+ 	}
+ 	vga_mem_write16(pc->vga, addr - 0xa0000, val);
+@@ -701,7 +701,8 @@ static void iomem_write32(void *iomem, uword addr, u32 val)
+ 		uword vga_addr2 = pc->pci_vga_ram_addr;
+ 		addr -= vga_addr2;
+ 		if (addr + 3 < pc->vga_mem_size)
+-			*(uint32_t *)&(pc->vga_mem[addr]) = val;
++			{ pc->vga_mem[addr] = val; pc->vga_mem[addr + 1] = val >> 8;
++			  pc->vga_mem[addr + 2] = val >> 16; pc->vga_mem[addr + 3] = val >> 24; }
+ 		return;
+ 	}
+ 	vga_mem_write32(pc->vga, addr - 0xa0000, val);
+diff --git a/vga.c b/vga.c
+index e1c1386..f987d24 100644
+--- a/vga.c
++++ b/vga.c
+@@ -32,6 +32,10 @@
+ #include "vga.h"
+ #include "pci.h"
+ 
++#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && !defined(HOST_WORDS_BIGENDIAN)
++#define HOST_WORDS_BIGENDIAN
++#endif
++
+ /* A quicker way of drawing the 16-colour modes, for a screen of 16 bits a
+    pixel that is drawn on directly and is slow to write: see
+    vga_graphic_refresh().  It takes the planes' bytes and the screen's
+@@ -1042,7 +1046,8 @@ static void vga_text_refresh(VGAState *s,
+ #else
+         for(cx = 0; cx < width; cx++) {
+ #endif
+-            ch_attr = *(uint16_t *)(vga_ram + (ch_addr & 0x1fffe));
++            ch_attr = vga_ram[ch_addr & 0x1fffe] |
++                (vga_ram[(ch_addr & 0x1fffe) + 1] << 8);
+ #ifdef FULL_UPDATE
+             if (1) {
+ #else
+@@ -1546,10 +1551,8 @@ static void vga_graphic_refresh(VGAState *s,
+                 }
+             }
+             int i = (BPP / 8) * (y * fb_dev->width + x) + i0;
+-            fb_dev->fb_data[i + 0] = color;
+-            fb_dev->fb_data[i + 1] = color >> 8;
+-            fb_dev->fb_data[i + 2] = color >> 16;
+-            fb_dev->fb_data[i + 3] = color >> 24;
++            /* a word in the host's order, as the text is drawn */
++            *(uint32_t *)(fb_dev->fb_data + i) = color;
+ #elif BPP == 16
+             {
+                 switch (bpp) {
+@@ -1712,6 +1715,67 @@ void vga_refresh(VGAState *s,
+     }
+ }
+ 
++/* Where in the frame buffer the picture was drawn last: for a program
++   that shows it some other way (scaled down, or a part of it).  w 0: no
++   picture (blank, or nothing drawn yet). */
++void vga_picture_rect(VGAState *s, int *x, int *y, int *w, int *h)
++{
++    FBDevice *fb_dev = s->fb_dev;
++    *x = *y = *w = *h = 0;
++    if (s->graphic_mode == 2 && s->last_gw > 0) {
++        *w = s->last_gw;
++        *h = s->last_gh;
++        *x = *w < fb_dev->width ? (fb_dev->width - *w) / 2 : 0;
++        *y = *h < fb_dev->height ? (fb_dev->height - *h) / 2 : 0;
++    } else if (s->graphic_mode == 1 && s->last_text_w1 > 0) {
++        *x = s->last_text_x1;
++        *y = s->last_text_y1;
++        *w = s->last_text_w1;
++        *h = s->last_text_h1;
++    }
++}
++
++/* The 16-colour planar modes as Windows' VGA driver uses them (mode 12h):
++   for a program that draws them itself from video memory (the RNS-E's
++   port, win311/port/screen.c), a word of four planes for every eight
++   pixels.  1 with the picture's particulars when it is one of them
++   plainly: four planes, the full dot clock, every line once, no panning,
++   no split screen, no CGA addressing; 0 for anything else. */
++int vga_planar_get(VGAState *s, struct vga_planar *p)
++{
++    /* (as vga_refresh decides it, which the caller need not have run) */
++    if (!(s->ar_index & 0x20) || !(s->gr[0x06] & 1) || vbe_enabled(s))
++        return 0;
++    if (((s->gr[0x05] >> 5) & 3) != 0 || (s->sr[0x01] & 8) ||
++        (s->cr[0x09] & 0x9f) || (s->ar[0x12] & 0xf) != 0xf ||
++        (s->ar[0x13] & 7) || (s->cr[0x17] & 3) != 3)
++        return 0;
++    int w = (s->cr[0x01] + 1) * 8;
++    int h = (s->cr[0x12] | ((s->cr[0x07] & 0x02) << 7) |
++             ((s->cr[0x07] & 0x40) << 3)) + 1;
++    int line_compare = s->cr[0x18] | ((s->cr[0x07] & 0x10) << 4) |
++        ((s->cr[0x09] & 0x40) << 3);
++    if (line_compare < h)
++        return 0;
++    p->vram = s->vga_ram;
++    p->vram_size = s->vga_ram_size;
++    p->start = 4 * (s->cr[0x0d] | (s->cr[0x0c] << 8));
++    p->line_offset = s->cr[0x13] << 3;
++    p->w = w;
++    p->h = h;
++    for (int i = 0; i < 16; i++) {
++        uint32_t v = s->ar[i];
++        if (s->ar[0x10] & 0x80)
++            v = ((s->ar[0x14] & 0xf) << 4) | (v & 0xf);
++        else
++            v = ((s->ar[0x14] & 0xc) << 4) | (v & 0x3f);
++        v = (v & s->dac_mask) * 3;
++        p->palette[i] = (c6_to_8(s->palette[v]) << 16) |
++            (c6_to_8(s->palette[v + 1]) << 8) | c6_to_8(s->palette[v + 2]);
++    }
++    return 1;
++}
++
+ /* force some bits to zero */
+ static const uint8_t sr_mask[8] = {
+     (uint8_t)~0xfc,
+@@ -2207,7 +2271,8 @@ void IRAM_ATTR vga_mem_write16(VGAState *s, uint32_t addr, uint16_t val16)
+     plane = addr & 3;
+     mask = (1 << plane);
+     if (s->sr[VGA_SEQ_PLANE_WRITE] & mask) {
+-        * (uint16_t *) &(s->vga_ram[addr]) = val;
++        s->vga_ram[addr] = val;
++        s->vga_ram[addr + 1] = val >> 8;
+     }
+ }
+ 
+@@ -2256,7 +2321,10 @@ void IRAM_ATTR vga_mem_write32(VGAState *s, uint32_t addr, uint32_t val)
+     plane = addr & 3;
+     mask = (1 << plane);
+     if (s->sr[VGA_SEQ_PLANE_WRITE] & mask) {
+-        * (uint32_t *) &(s->vga_ram[addr]) = val;
++        s->vga_ram[addr] = val;
++        s->vga_ram[addr + 1] = val >> 8;
++        s->vga_ram[addr + 2] = val >> 16;
++        s->vga_ram[addr + 3] = val >> 24;
+     }
+ }
+ 
+diff --git a/vga.h b/vga.h
+index 092d9c4..afc18f7 100644
+--- a/vga.h
++++ b/vga.h
+@@ -13,6 +13,16 @@ typedef struct VGAState VGAState;
+ VGAState *vga_init(char *vga_ram, int vga_ram_size,
+                    uint8_t *fb, int width, int height);
+ void vga_set_force_8dm(VGAState *s, int v);
++void vga_picture_rect(VGAState *s, int *x, int *y, int *w, int *h);
++struct vga_planar {
++    const uint8_t *vram;    /* four bytes an address, planes 0..3 */
++    uint32_t vram_size;
++    uint32_t start;         /* byte offset in vram of the first line */
++    uint32_t line_offset;   /* bytes from a line to the next */
++    int w, h;               /* pixels */
++    uint32_t palette[16];   /* 0x00RRGGBB */
++};
++int vga_planar_get(VGAState *s, struct vga_planar *p);
+ 
+ int vga_step(VGAState *vga);
+ /* In a build with BPP 16 and VGA_STORE_CHANGED: 0 draws the 16-colour modes
