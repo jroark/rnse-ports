@@ -44,7 +44,7 @@ What is ours (MIT, as the rest):
 | `doom/port/i_input.c` | the faceplate as keyboard and mouse |
 | `doom/port/sound.c` | the sound effects (no music) |
 | `doom/port/w_file.c` | the WAD, from RAM |
-| `doom/port/libc/` | the C library the game wants: strings, `printf` and `scanf`, `malloc` with `free`, files in RAM, the 64-bit division the compiler calls |
+| `sdk/libc/` | the C library the game wants (shared with umac, [umac.md](umac.md)): strings, `printf` and `scanf`, `malloc` with `free`, files in RAM, the 64-bit division the compiler calls |
 | `doom/patches/0001-rnse.patch` | doomgeneric without floating point (a frame rate in tenths, no float settings, no mouse-speed box) and without SDL |
 | `tests/disc.rs` `doom_runs_from_an_sd_card` | the end-to-end test |
 
@@ -132,7 +132,7 @@ not used in place, since a lump in the WAD need not start on an address
 the SH-4 can read a word from, and Doom reads words from lumps.
 
 Files the game writes (the settings, `.default.cfg`; saved games) are
-kept in RAM (`doom/port/libc/libc.c`) until the unit is switched off:
+kept in RAM (`sdk/libc/libc.c`) until the unit is switched off:
 saving and loading work within one run.
 
 ## The picture

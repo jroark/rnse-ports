@@ -96,11 +96,11 @@ sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
-# The game's C library (doom/port/libc) and the compiler's own headers,
+# The game's C library (sdk/libc) and the compiler's own headers,
 # and nothing of the cross compiler's Linux C library.
 common="-g -mb -m4-nofpu -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
-engine="$common -O2 -w -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$here/port/libc -I$src $EXTRA_CFLAGS"
-port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$here/port -I$here/port/libc -I$src -I$sdk/include -I$sdk/examples/doomboot $EXTRA_CFLAGS"
+engine="$common -O2 -w -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$root/sdk/libc -I$src $EXTRA_CFLAGS"
+port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$here/port -I$root/sdk/libc -I$src -I$sdk/include -I$sdk/examples/doomboot $EXTRA_CFLAGS"
 sdkflags="$common -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
 
 # The engine: doomgeneric's list, without what is ours (doom/port) or for
@@ -125,7 +125,7 @@ add() { # flags source object
 }
 for f in $engine_files; do add "$engine" "$src/$f.c" "$obj/e-$f.o"; done
 for f in $sdk_files; do add "$sdkflags" "$sdk/src/$f" "$obj/s-${f%.*}.o"; done
-for f in "$here"/port/*.c "$here"/port/libc/*.c; do
+for f in "$here"/port/*.c "$root"/sdk/libc/*.c; do
     add "$port" "$f" "$obj/p-$(basename "$f" .c).o"
 done
 # One compiler a line, several at once.
