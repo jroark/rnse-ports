@@ -1,0 +1,7 @@
+video.c -m4-nofpu -O2
+ac3.c -m4 -fsingle-precision-constant -fno-math-errno -ffinite-math-only -O2
+mpa.c -m4 -fsingle-precision-constant -fno-math-errno -ffinite-math-only -O2
+screen.c -m4-nofpu -O2
+stream.c -m4-nofpu -O2
+drive.c -m4-nofpu -O2
+sound.c -m4-nofpu -O2
