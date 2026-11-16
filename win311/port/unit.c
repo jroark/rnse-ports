@@ -182,8 +182,11 @@ static void text_lines(const char *text, int y, u8 colour)
 void port_exit(int status)
 {
     ending = 1;
+    /* A short RETURN from while the PC ran is not for this screen. */
+    panel_return_short();
     if (status == 0) {
         leave();
+        display_wait(10000);
         loader_return(0);
     }
     screen_palette(0, 0, 0, 0);
@@ -197,6 +200,7 @@ void port_exit(int status)
         panel_service();
         if (panel_return_short()) {
             leave();
+            display_wait(10000);
             loader_return(status ? status : 1);
         }
         cpu_idle();
