@@ -1,0 +1,88 @@
+Doom on the RNS-E 192 (doom/build.sh): doomgeneric without floating point,
+since the game is built for -m4-nofpu and has no soft-float library, and
+without SDL (-DRNSE).
+
+diff -ru a/g_game.c b/g_game.c
+--- a/g_game.c	2026-10-11 06:12:25
++++ b/g_game.c	2026-11-15 18:22:38
+@@ -2251,19 +2251,20 @@
+ 	 
+     if (timingdemo) 
+     { 
+-        float fps;
++        int fps10;
+         int realtics;
+ 
+ 	endtime = I_GetTime (); 
+         realtics = endtime - starttime;
+-        fps = ((float) gametic * TICRATE) / realtics;
++        // (RNS-E: no floating point; tenths of a frame a second.)
++        fps10 = realtics > 0 ? gametic * TICRATE * 10 / realtics : 0;
+ 
+         // Prevent recursive calls
+         timingdemo = false;
+         demoplayback = false;
+ 
+-	I_Error ("timed %i gametics in %i realtics (%f fps)",
+-                 gametic, realtics, fps);
++	I_Error ("timed %i gametics in %i realtics (%i.%i fps)",
++                 gametic, realtics, fps10 / 10, fps10 % 10);
+     } 
+ 	 
+     if (demoplayback) 
+diff -ru a/i_sound.c b/i_sound.c
+--- a/i_sound.c	2026-10-11 06:12:25
++++ b/i_sound.c	2026-11-15 18:29:44
+@@ -18,7 +18,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
+-#if defined(FEATURE_SOUND) && !defined(__DJGPP__)
++#if defined(FEATURE_SOUND) && !defined(__DJGPP__) && !defined(RNSE)
+ #include <SDL_mixer.h>
+ #endif
+ 
+diff -ru a/m_config.c b/m_config.c
+--- a/m_config.c	2026-10-11 06:12:25
++++ b/m_config.c	2026-11-15 18:22:38
+@@ -1696,7 +1696,9 @@
+                 break;
+ 
+             case DEFAULT_FLOAT:
+-                fprintf(f, "%f", * (float *) defaults[i].location);
++                // (RNS-E: no floating point; such settings keep
++                // their defaults.)
++                fprintf(f, "0");
+                 break;
+ 
+             case DEFAULT_STRING:
+@@ -1763,7 +1765,7 @@
+             break;
+ 
+         case DEFAULT_FLOAT:
+-            * (float *) def->location = (float) atof(value);
++            // (RNS-E: no floating point; the default stays.)
+             break;
+     }
+ }
+diff -ru a/v_video.c b/v_video.c
+--- a/v_video.c	2026-10-11 06:12:25
++++ b/v_video.c	2026-11-15 18:30:47
+@@ -845,6 +845,10 @@
+ 
+ void V_DrawMouseSpeedBox(int speed)
+ {
++#ifdef RNSE
++    // (No mouse acceleration, so no box, and no floating point.)
++    (void) speed;
++#else
+     extern int usemouse;
+     int bgcolor, bordercolor, red, black, white, yellow;
+     int box_x, box_y;
+@@ -928,5 +932,6 @@
+ 
+     V_DrawVertLine(box_x + redline_x, box_y + 1,
+                  MOUSE_SPEED_BOX_HEIGHT - 2, red);
++#endif
+ }
+ 
