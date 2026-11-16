@@ -51,6 +51,13 @@ static void message(const char *s) {
   console_puts(s);
   console_puts("\n");
 }
+/* A message's pause, the faceplate (eject, display, RETURN held)
+ * served all the while. */
+static void hold(u32 ms) {
+  u32 until = millis() + ms;
+  while ((s32)(millis() - until) < 0)
+    service();
+}
 static int mount(void) {
   int i;
   for (i = 0; i < 2; i++)
@@ -180,13 +187,13 @@ int main(void) {
     message("LOADING ROM");
     if (sd_load(names[index], rom_image, 4194304, &rom_bytes)) {
       message("ROM READ FAILED");
-      delay_ms(1000);
+      hold(1000);
       continue;
     }
     rom_bytes = sizes[index];
     if (!cartridge_valid(rom_image, rom_bytes)) {
       message("UNSUPPORTED OR INVALID ROM");
-      delay_ms(1000);
+      hold(1000);
       continue;
     }
     play();
