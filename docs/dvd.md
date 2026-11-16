@@ -37,11 +37,8 @@ loader waits in RAM for the player to return.
   has made from one's own recordings.
 * **Not discs scrambled with CSS**, which almost every commercial disc
   is.  The player recognises them (the PES headers say so) and says so
-  rather than showing garbage.  Descrambling them would be a
-  circumvention tool in the sense of 17 U.S.C. 1201 and the EU's
-  copyright directive, and the drive would also have to agree to the
-  authentication that a commercial player goes through (REPORT KEY /
-  SEND KEY), which nobody has tried on this unit's drive.
+  rather than showing garbage.  It has a place where a descrambler can
+  be added, and none in it: see "Scrambled discs" below.
 * Video: MPEG-2 main profile at main level (all of DVD: frame and field
   pictures, field and frame prediction, field DCT, both coefficient
   tables, both scans, the non-linear quantiser scale) and MPEG-1.  Dual
@@ -59,6 +56,42 @@ loader waits in RAM for the player to return.
   of the DVD standard, with buttons drawn as subpictures), subtitles,
   angles other than the first.  The player shows the titles as a list
   instead.
+
+## Scrambled discs
+
+The repository has no CSS descrambler and will not have one: in the
+United States (17 U.S.C. 1201), the EU (article 6 of directive
+2001/29/EC) and elsewhere, distributing a tool that gets around CSS is
+itself prohibited.  Where that is not the law, one can add a
+descrambler of one's own without touching the player:
+`sdk/examples/dvd/scramble.c` defines two weak functions, and a file in
+that directory that defines them again takes their place (`build.sh`
+compiles every `.c` file there).
+
+* `int scramble_open(const struct disc_playlist *pl, u32 ifo)` is
+  called before a title is played: its cells, as sectors of the disc,
+  and the sector of its title set's IFO.  The drive can be talked to
+  with `cd_command`.  Return 0 if the title's scrambled sectors can be
+  handled.
+* `int scramble_sector(u8 *sector)` gets each pack (2048 bytes,
+  writable) whose PES packets are marked as scrambled, and has to leave
+  it as it would have been unscrambled, with the marks cleared (bits 5
+  and 4 of the byte after each packet's length).  Return 0 when done.
+
+The player checks the marks again after `scramble_sector` and refuses
+the title if any is left, as it does when `scramble_open` says no.
+What such a file would have to do beyond the sectors themselves: a
+drive of a DVD player refuses to read scrambled sectors until it has
+been through the authentication of the standard (REPORT KEY and SEND
+KEY), and whether this unit's drive, a navigation drive, does that, or
+has a region set, has not been tried.  The player's reads retry a
+refused sector three times and then pass over it.
+
+`tests/dvd.rs` (`dvd_player_hands_scrambled_sectors_to_a_descrambler`)
+checks the extension point with a stand-in built with `SCRAMBLE_TEST`,
+which only clears the marks of a test disc whose data was never
+scrambled: it shows that the hooks are called where they should be,
+and descrambles nothing.
 
 ## How it works
 
@@ -144,7 +177,8 @@ loader's place by the boot ROM's stand-in (no firmware needed), with
 the test disc in the drive and the caches modelled: the list of
 titles, the first title played (the picture checked for colour, the
 amplifier's output for the tone), INFO, CAR, NEXT, RETURN, and a copy
-of the disc with its video marked as scrambled, which is refused.
+of the disc with its video marked as scrambled, which is refused, and
+the same disc with the descrambler's stand-in built in, which plays.
 `tests/disc.rs`, `dvd_player_from_the_sd_loader`, does it the way a
 unit does it: stock software, SD loader, the player from a card, the
 loader's disc ejected, the DVD put in, RETURN held back to the loader.

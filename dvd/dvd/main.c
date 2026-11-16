@@ -14,7 +14,8 @@
  *   RETURN                  back to the list; held, back to the SD loader
  *
  * Unencrypted discs only: discs scrambled with CSS are recognised and
- * refused (docs/dvd.md says why).  No menus and no subtitles. */
+ * refused, unless a descrambler has been put in scramble.c's place
+ * (docs/dvd.md, "Scrambled discs").  No menus and no subtitles. */
 #include "player.h"
 
 /* RAM for everything big: below the stock loader's place, above the
@@ -223,6 +224,7 @@ static struct {
     int local;           /* the clock runs from the timer, from: */
     u32 local_pts, local_us;
     int scrambled, audio_bad;
+    int descramble;          /* scramble_open said yes for this title */
     /* Where in the video stream each cell begins (the reading runs
      * seconds ahead of the picture): the chapter shown follows the
      * pictures. */
@@ -442,10 +444,12 @@ static int step(void)
     drive_service(32);
     /* Packs to the elementary streams while they want more. */
     while (es_level(&stream_video) < 512 * 1024 && es_level(&stream_audio) < 96 * 1024 && (p = drive_sector(&c))) {
-        if (stream_pack(p)) {
+        if (stream_pack_scrambled(p) &&
+            (!play.descramble || scramble_sector((u8 *)p) || stream_pack_scrambled(p))) {
             play.scrambled = 1;
             return 1;
         }
+        stream_pack(p);
         if (c != play.demux_cell && play.ncells < 16) {
             play.cells[play.ncells].pos = stream_video.end;
             play.cells[play.ncells].cell = c;
@@ -546,6 +550,7 @@ static int play_title(int t)
     play.sectors_at = drive_sectors;
     play.audio_frames = 0;
     play.scrambled = 0;
+    play.descramble = scramble_open(&playlist, disc_titles[t].ifo) == 0;
     play.audio_bad = 0;
     play.osd = 0;
     for (r = 0; r < playlist.naudio && audio_id_of(r) >= 0 && playlist.audio[r].coding == 6; r++)
@@ -610,7 +615,7 @@ static int play_title(int t)
     drive_stop();
     sound_reset();
     if (play.scrambled) {
-        message("THIS DISC IS ENCRYPTED WITH CSS.", "THE PLAYER PLAYS UNENCRYPTED DISCS ONLY.", "PRESS RETURN.");
+        message("THIS DISC IS ENCRYPTED WITH CSS.", play.descramble ? "THE DESCRAMBLER COULD NOT UNSCRAMBLE IT." : "THIS PLAYER HAS NO DESCRAMBLER: DOCS/DVD.MD.", "PRESS RETURN.");
         while (!panel_return_short())
             if (keys())
                 return 1;

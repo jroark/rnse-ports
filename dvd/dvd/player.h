@@ -34,6 +34,12 @@ u32 sound_ahead(void);       /* frames written and not yet heard */
 int sound_clock(u32 *pts);
 extern int sound_ok;
 
+/* scramble.c: where a descrambler goes (none here; see that file and
+ * docs/dvd.md).  0 from scramble_open: scrambled sectors are handed to
+ * scramble_sector, which unscrambles one in place. */
+int scramble_open(const struct disc_playlist *pl, u32 ifo);
+int scramble_sector(u8 *sector);
+
 /* screen.c */
 enum { SCREEN_MENU, SCREEN_VIDEO16, SCREEN_VIDEO8 };
 void screen_init(void);

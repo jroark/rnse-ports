@@ -74,8 +74,11 @@ extern u32 stream_scrambled, stream_bad;
 
 void stream_init(u8 *video_buf, u32 video_size, u8 *audio_buf, u32 audio_size);
 void stream_reset(void);
-/* One pack (a sector).  0, or 1 when its data is scrambled. */
+/* One pack (a sector).  0, or 1 when its data is scrambled (and
+ * nothing of it was taken). */
 int stream_pack(const u8 *p);
+/* Whether a pack has PES packets marked as scrambled. */
+int stream_pack_scrambled(const u8 *p);
 /* The next whole video unit (headers and one picture, see
  * video_decode) at *p; 0 when there is none yet (more packs wanted).
  * end_of_stream: what is left counts as whole. */

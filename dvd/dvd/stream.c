@@ -128,9 +128,25 @@ static void audio_payload(int id, const u8 *d, u32 n, int has_pts, u32 pts)
     es_put(&stream_audio, d, n, has_pts, pts);
 }
 
+int stream_pack_scrambled(const u8 *p)
+{
+    u32 o;
+    if (p[0] || p[1] || p[2] != 1 || p[3] != 0xba || (p[4] & 0xc0) != 0x40)
+        return 0;
+    for (o = 14 + (p[13] & 7); o + 9 <= 2048 && !p[o] && !p[o + 1] && p[o + 2] == 1;
+         o += 6 + ((u32)p[o + 4] << 8 | p[o + 5]))
+        if ((p[o + 6] & 0xc0) == 0x80 && (p[o + 6] & 0x30))
+            return 1;
+    return 0;
+}
+
 int stream_pack(const u8 *p)
 {
     u32 o;
+    if (stream_pack_scrambled(p)) {
+        stream_scrambled++;
+        return 1;
+    }
     if (p[0] || p[1] || p[2] != 1 || p[3] != 0xba) {
         stream_bad++;
         return 0;

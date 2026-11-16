@@ -18,17 +18,30 @@ use rnse::machine::Machine;
 use rnse::sh4::cpu::Stop;
 
 fn build() -> Option<Vec<u8>> {
+    build_with("")
+}
+
+/// The program built with EXTRA_CFLAGS (read before another test can
+/// build it otherwise).
+fn build_with(extra: &str) -> Option<Vec<u8>> {
     let sdk = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("sdk");
     static BUILD: std::sync::Mutex<()> = std::sync::Mutex::new(());
-    let _lock = BUILD.lock().unwrap();
-    let out = std::process::Command::new("sh").arg(sdk.join("build.sh")).args(["192", "dvd"]).output().ok()?;
+    let _lock = BUILD.lock().unwrap_or_else(|e| e.into_inner());
+    let out = std::process::Command::new("sh").arg(sdk.join("build.sh")).args(["192", "dvd"])
+        .env("EXTRA_CFLAGS", extra).output().ok()?;
     if !out.status.success() {
         let text = String::from_utf8_lossy(&out.stderr);
         // A compiler that is there and fails is a failure; none is a skip.
         assert!(!text.contains("error") || text.contains("not found"), "build: {}", text);
         return None;
     }
-    Some(std::fs::read(sdk.join("out/dvd-192.bin")).unwrap())
+    let program = std::fs::read(sdk.join("out/dvd-192.bin")).unwrap();
+    if !extra.is_empty() {
+        // sdk/out/dvd-192.bin is what goes on a card: the real one again.
+        let again = std::process::Command::new("sh").arg(sdk.join("build.sh")).args(["192", "dvd"]).output().unwrap();
+        assert!(again.status.success());
+    }
+    Some(program)
 }
 
 /// The program where the stock loader would be, started as the boot ROM
@@ -165,15 +178,9 @@ fn dvd_player_plays_a_disc() {
     assert_eq!((cache.stale_fetches, cache.dirty_discarded), (0, 0), "{:?}", cache);
 }
 
-/// A disc whose video is scrambled (CSS) is recognised and refused:
-/// the test disc with the scrambling bits of every video packet set, as
-/// they are on a commercial disc.  (Its data is the plain data still;
-/// the player looks at the bits only.)
-#[test]
-fn dvd_player_refuses_a_scrambled_disc() {
-    let Some(path) = std::env::var_os("RNSE_DVD") else { return };
-    let Some(program) = build() else { return };
-    let mut dvd = std::fs::read(path).expect("RNSE_DVD is not readable");
+/// The disc with the scrambling bits of every video packet set, as they
+/// are on a commercial disc.  (Its data is the plain data still.)
+fn marked(mut dvd: Vec<u8>) -> Vec<u8> {
     let mut marked = 0;
     for sector in dvd.chunks_mut(2048) {
         // A pack (MPEG-2 header) with a PES packet of the video stream.
@@ -191,6 +198,39 @@ fn dvd_player_refuses_a_scrambled_disc() {
         }
     }
     assert!(marked > 100, "{} video packets marked", marked);
+    dvd
+}
+
+/// The extension point for a descrambler (sdk/examples/dvd/scramble.c):
+/// built with SCRAMBLE_TEST, a stand-in that only clears the marks of
+/// the marked disc, whose data is plain.  The title plays: the hooks are
+/// called at the title's start and for its scrambled sectors.
+#[test]
+fn dvd_player_hands_scrambled_sectors_to_a_descrambler() {
+    let Some(path) = std::env::var_os("RNSE_DVD") else { return };
+    let Some(program) = build_with("-DSCRAMBLE_TEST") else { return };
+    let dvd = marked(std::fs::read(path).expect("RNSE_DVD is not readable"));
+    let mut m = start(&program, dvd);
+    assert!(until(&mut m, "READING THE DISC", 30), "{}", console(&m));
+    let ms = m.cycles_per_ms();
+    assert_eq!(m.run(3000 * ms), Stop::Budget, "{:?}", m.cpu.fault);
+    press(&mut m, "SELECT");
+    assert_eq!(m.run(3000 * ms), Stop::Budget, "{:?}", m.cpu.fault);
+    shot(&m, "descrambled.png");
+    let text = console(&m);
+    assert!(text.contains("scramble_open"), "{}", text);
+    assert!(!text.contains("ENCRYPTED"), "{}", text);
+    let colour = colourful(&m);
+    assert!(colour > 20_000, "{} colourful pixels: {}", colour, text);
+}
+
+/// A disc whose video is scrambled (CSS) is recognised and refused by
+/// the player as it is, which has no descrambler: the marked test disc.
+#[test]
+fn dvd_player_refuses_a_scrambled_disc() {
+    let Some(path) = std::env::var_os("RNSE_DVD") else { return };
+    let Some(program) = build() else { return };
+    let dvd = marked(std::fs::read(path).expect("RNSE_DVD is not readable"));
     let mut m = start(&program, dvd);
     assert!(until(&mut m, "READING THE DISC", 30), "{}", console(&m));
     let ms = m.cycles_per_ms();
