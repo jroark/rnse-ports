@@ -1,0 +1,49 @@
+--- a/common.c
++++ b/common.c
+@@ -855,23 +855,32 @@
+ */
+ void COM_FileBase (char *in, char *out)
+ {
+-	char *s, *s2;
+-	
+-	s = in + strlen(in) - 1;
+-	
+-	while (s != in && *s != '.')
+-		s--;
+-	
+-	for (s2 = s ; *s2 && *s2 != '/' ; s2--)
+-	;
+-	
+-	if (s-s2 < 2)
++	char *start, *end, *p;
++	int n;
++
++	// RNSE: the original looked back for the '/' without stopping at the
++	// start of the name, past it into whatever came before when there was
++	// none ("progs.dat"), and copied all that into the caller's 32 bytes.
++	start = in;
++	for (p = in ; *p ; p++)
++		if (*p == '/')
++			start = p + 1;
++	end = p;
++	for (p = end ; p > start ; p--)
++		if (*p == '.')
++		{
++			end = p;
++			break;
++		}
++	n = end - start;
++	if (n < 1)
+ 		strcpy (out,"?model?");
+ 	else
+ 	{
+-		s--;
+-		strncpy (out,s2+1, s-s2);
+-		out[s-s2] = 0;
++		if (n > 31)
++			n = 31;
++		strncpy (out, start, n);
++		out[n] = 0;
+ 	}
+ }
+ 
