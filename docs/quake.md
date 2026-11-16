@@ -37,7 +37,7 @@ PAK from a file instead; it has to be the same file.  Out come
 Neither the source nor the data is in the repository, and neither may
 be: the engine is GPL-2.0 (so is `QUAKEGAM.BIN`; whoever hands the
 binary on owes its source, which is the pinned commit plus
-`quake/patches/`, `quake/port/` and the parts of `doom/port/libc` and
+`quake/patches/`, `quake/port/` and the parts of `sdk/libc` and
 the kit that are linked in), and the data is id Software's shareware.
 `.gitignore` keeps `quake/work/`, `quake/out/` and `*.pak` out.
 
@@ -50,13 +50,13 @@ What is ours (MIT, as the rest):
 | `quake/port/vid_rnse.c` | the picture and the palette |
 | `quake/port/in_rnse.c` | the faceplate as keyboard and mouse |
 | `quake/port/snd_rnse.c` | the sound card: a card processor, fed by DMA from Quake's ring |
-| `quake/port/libc/` | what Quake wants beyond Doom's C library (`doom/port/libc`, which it shares): `math.h` and its functions, `setjmp`/`longjmp`, `rand`, the POSIX calls of the console log |
+| `quake/port/libc/` | what Quake wants beyond the kit's C library (`sdk/libc`, shared with Doom): `math.h` and its functions, `setjmp`/`longjmp`, `rand`, the POSIX calls of the console log |
 | `quake/patches/0001-com-filebase.patch` | a bug of the engine's that the PC never showed (below) |
 | `tests/disc.rs` `quake_runs_from_an_sd_card` | the end-to-end test |
 
-Shared with Doom and changed for Quake: `doom/port/libc/printf.c` knows
+Shared with Doom and changed for Quake: `sdk/libc/printf.c` knows
 `%f`, `%g` and `%e` (as `%f`) when built with the FPU, so Doom's build is
-as it was; `doom/port/libc/libc.c` has files whose bytes come from a
+as it was; `sdk/libc/libc.c` has files whose bytes come from a
 function of the program's (`files_add_reader`: the PAK, for the demos,
 which Quake reads with `fopen`).
 

@@ -13,7 +13,7 @@
  * PAK0.PAK stays on the card: its chain of clusters is read once, and
  * then the game's reads go to the sectors they need (sd_pread).  Other
  * files (config.cfg, saved games) live in RAM for the session, in the C
- * library shared with Doom (doom/port/libc).  See docs/quake.md. */
+ * library shared with Doom (sdk/libc).  See docs/quake.md. */
 #include <ctype.h>
 #include <strings.h>
 #include "quakedef.h"

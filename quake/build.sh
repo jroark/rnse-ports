@@ -113,7 +113,7 @@ sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
-# The game's C library (quake/port/libc first, then Doom's, doom/port/libc)
+# The game's C library (quake/port/libc first, then the kit's, sdk/libc)
 # and the compiler's own headers, and nothing of the cross compiler's
 # Linux C library.  The game has the FPU (-m4: double precision between
 # functions, single switched to where floats are used; this compiler
@@ -125,7 +125,7 @@ gccinc=$(${CROSS}gcc -print-file-name=include)
 # handler uses its registers and none has to save them.
 common="-g -mb -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
 fpu="-m4 -mdiv=call-table -fsingle-precision-constant -fno-math-errno -fcommon"
-libc="-I$here/port/libc -I$root/doom/port/libc"
+libc="-I$here/port/libc -I$root/sdk/libc"
 engine="$common $fpu -O2 -w -Werror=implicit-function-declaration -DRNSE $libc -I$src $EXTRA_CFLAGS"
 port="$common $fpu -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DRNSE -I$here/port $libc -I$src -I$sdk/include -I$sdk/examples/quakeboot $EXTRA_CFLAGS"
 sdkflags="$common -m4-nofpu -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
@@ -141,7 +141,7 @@ engine_files="cl_demo cl_input cl_main cl_parse cl_tent chase cmd common console
  snd_dma snd_mem snd_mix"
 sdk_files="crt0.S common.c libgcc.S cache.S panel.c display.c cd.c can.c sd.c pcm.c radio.c
  flash.c wayback.c enter.c hw192.c"
-# Doom's C library, whole; quake/port/libc adds to it.
+# The kit's C library (sdk/libc), whole; quake/port/libc adds to it.
 libc_files="libc printf libgcc64"
 
 jobs=${JOBS:-$(nproc 2>/dev/null || echo 4)}
@@ -154,7 +154,7 @@ add() { # flags source object
 }
 for f in $engine_files; do add "$engine" "$src/$f.c" "$obj/e-$f.o"; done
 for f in $sdk_files; do add "$sdkflags" "$sdk/src/$f" "$obj/s-${f%.*}.o"; done
-for f in $libc_files; do add "$port" "$root/doom/port/libc/$f.c" "$obj/d-$f.o"; done
+for f in $libc_files; do add "$port" "$root/sdk/libc/$f.c" "$obj/d-$f.o"; done
 for f in "$here"/port/*.c "$here"/port/libc/*.c "$here"/port/libc/*.S; do
     [ -f "$f" ] || continue
     b=$(basename "$f")
