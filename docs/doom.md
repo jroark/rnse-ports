@@ -44,7 +44,7 @@ What is ours (MIT, as the rest):
 | `doom/port/i_input.c` | the faceplate as keyboard and mouse |
 | `doom/port/sound.c` | the sound effects (no music) |
 | `doom/port/w_file.c` | the WAD, from RAM |
-| `doom/port/libc/` | the C library the game wants: strings, `printf` and `scanf`, `malloc` with `free`, files in RAM, the 64-bit division the compiler calls |
+| `sdk/libc/` | the C library the game wants (shared with umac, [umac.md](umac.md)): strings, `printf` and `scanf`, `malloc` with `free`, files in RAM, the 64-bit division the compiler calls |
 | `doom/patches/0001-rnse.patch` | doomgeneric without floating point (a frame rate in tenths, no float settings, no mouse-speed box) and without SDL |
 | `tests/disc.rs` `doom_runs_from_an_sd_card` | the end-to-end test |
 
@@ -132,7 +132,7 @@ not used in place, since a lump in the WAD need not start on an address
 the SH-4 can read a word from, and Doom reads words from lumps.
 
 Files the game writes (the settings, `.default.cfg`; saved games) are
-kept in RAM (`doom/port/libc/libc.c`) until the unit is switched off:
+kept in RAM (`sdk/libc/libc.c`) until the unit is switched off:
 saving and loading work within one run.
 
 ## The picture
@@ -248,8 +248,10 @@ unit once, on Linux's way back (`docs/linux.md`), and the emulator
 counts an `ocbp` as one cycle, which a unit evidently does not.  The
 same build also has the kit's exception screen
 (`unexpected`, `sdk/src/common.c`: the exception's code and PC on the
-screen, the watchdog served for half a minute; before, an exception
-was a dark reset, indistinguishable from the watchdog's), the game's
+screen until the watchdog resets the unit into its own software,
+which keeps eject working; holding the screen up for half a minute by
+serving the watchdog from it was tried and taken out again, since it
+left eject and the display key dead for as long), the game's
 `DOOM IS STARTING` at its first instruction, and `pcm.c` reading a DMA
 channel's control register before it clears the end flag, as the SH-4
 manual wants.  `-DRNSE_TEST_FAULT` in `EXTRA_CFLAGS` builds a game that
