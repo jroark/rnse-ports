@@ -13,7 +13,7 @@
 # SHA-256, into umac/work/, and patched (umac/patches/).  The Mac's ROM
 # and disks are Apple's and are never downloaded: bring your own.  The
 # SH-4 GCC is sh4-linux-gnu-gcc when RNSE_UMAC_NATIVE=1, else the
-# container of tools/sh4-docker; Musashi's generator is built with the
+# container of sdk/tools/sh4-docker; Musashi's generator is built with the
 # host's cc (HOSTCC).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -79,7 +79,7 @@ if [ -z "$RNSE_UMAC_INSIDE" ]; then
         RNSE_UMAC_INSIDE=1 sh "$here/build.sh"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/tools/sh4-docker" >&2
+            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
         docker run --rm -e RNSE_UMAC_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
             rnse-sh4-cross sh "$here/build.sh"
     fi

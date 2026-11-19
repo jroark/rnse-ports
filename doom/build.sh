@@ -12,7 +12,7 @@
 # checked against their SHA-256, into doom/work/.  DOOM_WAD=FILE takes a
 # DOOM1.WAD from elsewhere (checked the same way).  The SH-4 GCC is
 # sh4-linux-gnu-gcc when RNSE_DOOM_NATIVE=1, else the container of
-# tools/sh4-docker.
+# sdk/tools/sh4-docker.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(dirname "$here")
@@ -67,7 +67,7 @@ if [ -z "$RNSE_DOOM_INSIDE" ]; then
         RNSE_DOOM_INSIDE=1 sh "$here/build.sh"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/tools/sh4-docker" >&2
+            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
         docker run --rm -e RNSE_DOOM_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
             rnse-sh4-cross sh "$here/build.sh"
     fi

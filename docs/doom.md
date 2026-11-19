@@ -14,13 +14,13 @@ page.
 
 ## Building
 
-    PATH=$PWD/tools/sh4-docker:$PATH sdk/build.sh 192 doomboot   # sdk/out/doomboot-192.bin
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH sdk/build.sh 192 doomboot   # sdk/out/doomboot-192.bin
     doom/build.sh                                               # doom/out/DOOMGAME.BIN, DOOM1.WAD
 
 `doom/build.sh` downloads doomgeneric at a pinned commit and the
 shareware `DOOM1.WAD` of Doom 1.9 (MD5 `f0cefca49926d00903cf57551d901abe`)
 into `doom/work/dl`, checks both against their SHA-256, applies
-`doom/patches/`, and builds in the container of `tools/sh4-docker`
+`doom/patches/`, and builds in the container of `sdk/tools/sh4-docker`
 (`RNSE_DOOM_NATIVE=1`: with an `sh4-linux-gnu-gcc` on the PATH
 instead).  `DOOM_WAD=FILE` takes the WAD from a file instead of the
 download; it has to be the same file.  Out come `doom/out/DOOMGAME.BIN`,
@@ -76,7 +76,7 @@ In the emulator, with the stock software doing the starting as on a unit:
 The game's messages come out on the debug serial port (the emulator
 prints them). The end-to-end test:
 
-    PATH=$PWD/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_DOOM=$PWD/doom/out \
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_DOOM=$PWD/doom/out \
         cargo test --release --test disc doom_runs_from_an_sd_card
 
 ## Two stages

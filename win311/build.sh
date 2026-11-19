@@ -11,7 +11,7 @@
 # Neither Tiny386 (BSD-3-Clause) nor SeaBIOS (LGPL-3) is kept in the
 # repository: both are downloaded, pinned and checked against their
 # SHA-256, into win311/work/.  The SH-4 GCC is sh4-linux-gnu-gcc when
-# RNSE_WIN311_NATIVE=1, else the container of tools/sh4-docker; SeaBIOS
+# RNSE_WIN311_NATIVE=1, else the container of sdk/tools/sh4-docker; SeaBIOS
 # is built in the container of win311/docker (an x86 GCC).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -80,7 +80,7 @@ if [ -z "$RNSE_WIN311_INSIDE" ]; then
         (cd "$root/sdk" && ./build.sh 192 pcboot)
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/tools/sh4-docker" >&2
+            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
         docker run --rm -e RNSE_WIN311_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
             rnse-sh4-cross sh "$here/build.sh"
         docker run --rm -v "$root":"$root" -w "$root/sdk" rnse-sh4-cross ./build.sh 192 pcboot >/dev/null

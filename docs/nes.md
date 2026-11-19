@@ -10,7 +10,7 @@ physical unit require testing; mapper presence is not a compatibility guarantee.
 ## Build and run
 
 ```
-PATH="$PWD/tools/sh4-docker:$PATH" sdk/nes-build.sh
+PATH="$PWD/sdk/tools/sh4-docker:$PATH" sdk/nes-build.sh
 ```
 
 Alternatively run `sdk/nes-build.sh` in the `rnse-sh4-cross` container, mounting
@@ -81,7 +81,7 @@ cc -Wall -Wextra -Werror -fsanitize=address,undefined \
   -Isdk/include -Isdk/examples/nes tests/nes/protocol.c \
   sdk/examples/nes/protocol.c -o /tmp/nes-protocol-test
 /tmp/nes-protocol-test
-PATH="$PWD/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
+PATH="$PWD/sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
   cargo test --release --test disc nes_bare_metal_sd_video_audio -- --nocapture
 ```
 

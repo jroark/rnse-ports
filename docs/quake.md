@@ -19,7 +19,7 @@ vouch for is at the end of this page.
 
 ## Building
 
-    PATH=$PWD/tools/sh4-docker:$PATH sdk/build.sh 192 quakeboot   # sdk/out/quakeboot-192.bin
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH sdk/build.sh 192 quakeboot   # sdk/out/quakeboot-192.bin
     quake/build.sh                                               # quake/out/QUAKEGAM.BIN, PAK0.PAK
 
 `quake/build.sh` downloads id's source (github.com/id-Software/Quake)
@@ -28,7 +28,7 @@ against their SHA-256, takes `PAK0.PAK` out of the archive's
 `resource.1` (an LHA archive, which `bsdtar` reads; macOS has it), checks
 that against its SHA-256 as well (MD5 `5906e5998fc3d896ddaf5e6a62e03abb`,
 18,689,235 bytes), applies `quake/patches/` and builds in the container
-of `tools/sh4-docker` (`RNSE_QUAKE_NATIVE=1`: with an
+of `sdk/tools/sh4-docker` (`RNSE_QUAKE_NATIVE=1`: with an
 `sh4-linux-gnu-gcc` on the PATH instead).  `QUAKE_PAK=FILE` takes the
 PAK from a file instead; it has to be the same file.  Out come
 `quake/out/QUAKEGAM.BIN`, `quake/out/quakegame.elf` (for
@@ -123,7 +123,7 @@ game's console comes out on the debug serial port, which the emulator
 prints; it lags behind the game by what the port has still to send.
 The end-to-end test:
 
-    PATH=$PWD/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_QUAKE=$PWD/quake/out \
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_QUAKE=$PWD/quake/out \
         cargo test --release --test disc quake_runs_from_an_sd_card
 
 ## Two stages

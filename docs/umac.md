@@ -14,13 +14,13 @@ Seen in the emulator, not yet on a unit (at the end of this page).
 
 ## Building
 
-    PATH=$PWD/tools/sh4-docker:$PATH sdk/build.sh 192 macboot   # sdk/out/macboot-192.bin
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH sdk/build.sh 192 macboot   # sdk/out/macboot-192.bin
     umac/build.sh                                             # umac/out/MACEMU.BIN
 
 `umac/build.sh` downloads umac and its Musashi at pinned commits into
 `umac/work/dl`, checks both against their SHA-256, applies
 `umac/patches/`, generates Musashi's opcode handlers with the host's
-`cc` (`HOSTCC`), and builds in the container of `tools/sh4-docker`
+`cc` (`HOSTCC`), and builds in the container of `sdk/tools/sh4-docker`
 (`RNSE_UMAC_NATIVE=1`: with an `sh4-linux-gnu-gcc` on the PATH
 instead).  Out come `umac/out/MACEMU.BIN` and `umac/out/macemu.elf`
 (for `rnse boot --gdb`).
@@ -109,7 +109,7 @@ SELECT: `--knob 1:1@MS` and `--key SELECT@MS+100`, as in the test.
 umac's messages come out on the debug serial port (the emulator prints
 them).  The end-to-end test:
 
-    PATH=$PWD/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_UMAC=$PWD/umac/out \
+    PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_UMAC=$PWD/umac/out \
         RNSE_MAC_ROM=plus-v3.rom RNSE_MAC_DISK=system.dsk \
         cargo test --release --test disc mac_runs_from_an_sd_card
 
