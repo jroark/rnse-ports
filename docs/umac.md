@@ -4,7 +4,7 @@
 emulator around Karl Stenerud's
 [Musashi](https://github.com/kstenerud/Musashi) 68000, run on the 192
 as a program of the SDK's, started from an SD card by the SD loader
-(`sdboot`, [sd-loader.md](sd-loader.md)), as Doom is
+(`sdboot`, [sd-loader.md](../../docs/sd-loader.md)), as Doom is
 ([doom.md](doom.md)): no other operating system underneath, the Mac on
 the kit's own drivers for the screen, the faceplate and the display.
 The Mac runs its own ROM and its own System from a disk image on the

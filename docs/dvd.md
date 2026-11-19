@@ -4,7 +4,7 @@
 stock software underneath, everything from the disc's file system to
 the sound written for the unit (no code from elsewhere).  It is started
 from an SD card by the SD loader (`sdk/examples/sdboot`,
-[sd-loader.md](sd-loader.md)), like any of the loader's programs.
+[sd-loader.md](../../docs/sd-loader.md)), like any of the loader's programs.
 
 ```sh
 sdk/build.sh 192 dvd
