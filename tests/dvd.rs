@@ -32,7 +32,7 @@ fn build_with(extra: &str) -> Option<Vec<u8>> {
     if !out.status.success() {
         let text = String::from_utf8_lossy(&out.stderr);
         // A compiler that is there and fails is a failure; none is a skip.
-        assert!(!text.contains("error") || text.contains("not found"), "build: {}", text);
+        assert!(text.contains("gcc: not found") || text.contains("gcc: command not found"), "build: {}", text);
         return None;
     }
     let program = std::fs::read(sdk.join("out/dvd-192.bin")).unwrap();
