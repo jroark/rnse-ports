@@ -13,7 +13,7 @@ cd "${RNSE_SDK:-$here/../../rnse-sdk}"
 CROSS=${CROSS:-sh4-linux-gnu-}
 mkdir -p out/nes
 objs=""
-flags="-DSDK_SESSION_LOAD=0x8c100000u -mb -m4-nofpu -O2 -g -ffreestanding -fno-builtin -fno-pic -fno-stack-protector -ffunction-sections -fdata-sections -Iinclude -I$here/nes/include -I$here/nofrendo -I$here/nofrendo/nes -I$here/nofrendo/cpu -I$here/nofrendo/sndhrdw -I$here/nofrendo/libsnss ${EXTRA_CFLAGS:-}"
+flags="-std=gnu17 -DSDK_SESSION_LOAD=0x8c100000u -mb -m4-nofpu -O2 -g -ffreestanding -fno-builtin -fno-pic -fno-stack-protector -ffunction-sections -fdata-sections -Iinclude -I$here/nes/include -I$here/nofrendo -I$here/nofrendo/nes -I$here/nofrendo/cpu -I$here/nofrendo/sndhrdw -I$here/nofrendo/libsnss ${EXTRA_CFLAGS:-}"
 for src in src/crt0.S src/common.c src/heap.c src/libgcc.S src/cache.S src/panel.c src/display.c src/cd.c src/can.c src/sd.c src/pcm.c src/radio.c src/flash.c src/wayback.c src/hw192.c $here/nes/*.c $here/nofrendo/bitmap.c $here/nofrendo/nes/nes.c $here/nofrendo/nes/nes_ppu.c $here/nofrendo/nes/nes_mmc.c $here/nofrendo/nes/nesinput.c $here/nofrendo/cpu/nes6502.c $here/nofrendo/sndhrdw/nes_apu.c $here/nofrendo/mappers/map00[012347].c; do
  obj=out/nes/$(echo "$src" | tr / _).o
  ${CROSS}gcc $flags -c "$src" -o "$obj"
