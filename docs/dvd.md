@@ -1,6 +1,6 @@
 # A DVD player for the 192
 
-`sdk/examples/dvd` plays DVD-Video discs on a 192, bare metal: no
+`dvd/dvd` plays DVD-Video discs on a 192, bare metal: no
 stock software underneath, everything from the disc's file system to
 the sound written for the unit (no code from elsewhere).  It is started
 from an SD card by the SD loader (`sdk/examples/sdboot`,
@@ -64,7 +64,7 @@ United States (17 U.S.C. 1201), the EU (article 6 of directive
 2001/29/EC) and elsewhere, distributing a tool that gets around CSS is
 itself prohibited.  Where that is not the law, one can add a
 descrambler of one's own without touching the player:
-`sdk/examples/dvd/scramble.c` defines two weak functions, and a file in
+`dvd/dvd/scramble.c` defines two weak functions, and a file in
 that directory that defines them again takes their place (`build.sh`
 compiles every `.c` file there).
 
@@ -146,7 +146,7 @@ the program itself is 75 KB, of the 112 KB a loader's program may have.
 
 ## How it was tested
 
-`sh sdk/tests/check-dvd.sh` makes test discs with ffmpeg, dvdauthor and
+`sh dvd/check.sh` makes test discs with ffmpeg, dvdauthor and
 genisoimage (test patterns and tones, NTSC and PAL, interlaced and
 progressive, AC-3 stereo and 5.1, LPCM, layer II, a UDF-only copy) and
 compares what the decoders, built for the computer, make of them with

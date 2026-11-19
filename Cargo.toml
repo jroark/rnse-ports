@@ -1,0 +1,18 @@
+# The ports' tests on the emulator: Doom, Quake, umac, Windows 3.11, the
+# NES emulator and the DVD player, started from the SD loader the way a
+# unit starts them (tests/disc.rs), and the DVD player on test discs
+# (tests/dvd.rs).  No Rust code of its own: the ports are C, built with
+# their build scripts and the kit.  Inside the rnse repository this is a
+# member of its workspace and uses the emulator from the directory above
+# and the kit beside it (RNSE_SDK to use another); on its own it takes
+# the `rnse` crate from git (see split/PLAN.md in rnse).
+[package]
+name = "rnse-ports"
+version = "0.1.0"
+edition = "2021"
+description = "Tests of the RNS-E ports (Doom, Quake, umac, Windows 3.11, NES, DVD) on the rnse emulator"
+license = "GPL-2.0-only"
+publish = false
+
+[dev-dependencies]
+rnse = { path = ".." }

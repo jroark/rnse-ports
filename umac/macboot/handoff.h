@@ -1,4 +1,4 @@
-/* What macboot (sdk/examples/macboot) leaves for umac (umac/), the
+/* What macboot (umac/macboot) leaves for umac (umac/), the
  * Mac Plus emulator it starts: at a fixed address below it, in cached
  * RAM.  See docs/umac.md, "Memory". */
 #ifndef MAC_HANDOFF_H

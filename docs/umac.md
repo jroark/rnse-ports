@@ -37,7 +37,7 @@ What is whose:
 
 | file | what | licence |
 |------|------|---------|
-| `sdk/examples/macboot/` | the first stage, `MAC.BIN`, and `handoff.h`, what it leaves umac | MIT, as the rest |
+| `umac/macboot/` | the first stage, `MAC.BIN`, and `handoff.h`, what it leaves umac | MIT, as the rest |
 | `umac/port/main.c` | the start, the run loop, the clock, the end | MIT |
 | `umac/port/video.c` | the picture | MIT |
 | `umac/port/input.c` | the faceplate as mouse and keys | MIT |
@@ -111,7 +111,7 @@ them).  The end-to-end test:
 
     PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_UMAC=$PWD/umac/out \
         RNSE_MAC_ROM=plus-v3.rom RNSE_MAC_DISK=system.dsk \
-        cargo test --release --test disc mac_runs_from_an_sd_card
+        cargo test --release -p rnse-ports --test disc mac_runs_from_an_sd_card
 
 It starts the Mac as on a unit, with the caches modelled and RAM
 arbitrary, waits for the Finder (its menu bar's line over the
@@ -123,7 +123,7 @@ watchdog and the caches throughout.  Screenshots go to `out/umac/`.
 
 The same as Doom's: `sdboot` loads a program of at most 0x1c000 bytes
 into the loader's place, and umac is 511 KB with the ROM and the disk
-besides.  So `MAC.BIN` (`sdk/examples/macboot`, 27 KB) is a first stage:
+besides.  So `MAC.BIN` (`umac/macboot`, 27 KB) is a first stage:
 
 1. It takes the faceplate controller over as `sdboot` left it, lit
    (`panel_attach`), and answers it while it reads the card (`sd_idle`

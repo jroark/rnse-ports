@@ -1,7 +1,7 @@
 /* Quake on the RNS-E 192: the game's start, its time, its files, its
  * waits and its end (sys_null.c's place).
  *
- * Started by quakeboot (sdk/examples/quakeboot) through image_enter,
+ * Started by quakeboot (quake/quakeboot) through image_enter,
  * with the card it came from still as the installed software started
  * it and the way back to the SD loader in the hand-off block
  * (handoff.h).  The SDK's start-up code has run anew: vectors, the

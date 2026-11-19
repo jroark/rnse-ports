@@ -1,4 +1,4 @@
-/* What quakeboot (sdk/examples/quakeboot) leaves for the game it starts
+/* What quakeboot (quake/quakeboot) leaves for the game it starts
  * (quake/): at a fixed address below the game, in cached RAM.  See
  * docs/quake.md, "Memory". */
 #ifndef QUAKE_HANDOFF_H

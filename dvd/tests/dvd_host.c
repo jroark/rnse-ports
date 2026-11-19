@@ -1,5 +1,5 @@
-/* Host tests of the DVD player's decoders (sdk/examples/dvd): what they
- * decode against what ffmpeg decodes.  sdk/tests/check-dvd.sh makes the
+/* Host tests of the DVD player's decoders (dvd/dvd): what they
+ * decode against what ffmpeg decodes.  dvd/check.sh makes the
  * test material with ffmpeg and runs this.
  *
  *   dvd_host video STREAM.m2v REF.yuv [full]

@@ -45,7 +45,7 @@ What is ours (MIT, as the rest):
 
 | file | what |
 |------|------|
-| `sdk/examples/quakeboot/` | the first stage, `QUAKE.BIN`, and `handoff.h`, what it leaves the game |
+| `quake/quakeboot/` | the first stage, `QUAKE.BIN`, and `handoff.h`, what it leaves the game |
 | `quake/port/sys_rnse.c` | the start, the clock, the files (`PAK0.PAK` from the card), the waits (`port_idle`), errors and the end |
 | `quake/port/vid_rnse.c` | the picture and the palette |
 | `quake/port/in_rnse.c` | the faceplate as keyboard and mouse |
@@ -124,13 +124,13 @@ prints; it lags behind the game by what the port has still to send.
 The end-to-end test:
 
     PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_QUAKE=$PWD/quake/out \
-        cargo test --release --test disc quake_runs_from_an_sd_card
+        cargo test --release -p rnse-ports --test disc quake_runs_from_an_sd_card
 
 ## Two stages
 
 As for Doom: `sdboot` loads at most 0x1c000 bytes into the loader's
 place (0x8df00000), and the game is 345 KB.  `QUAKE.BIN`
-(`sdk/examples/quakeboot`, 28 KB, made from `doomboot`):
+(`quake/quakeboot`, 28 KB, made from `doomboot`):
 
 1. takes the faceplate controller over as `sdboot` left it, lit, and
    answers it while it reads the card (the display key, CD EJECT and

@@ -1,6 +1,6 @@
 /* The DVD player's parts, between themselves.  The decoders (video.c,
  * ac3.c, mpa.c) and the disc's structures (disc.c, stream.c) use
- * nothing of the kit, so that sdk/tests/dvd_host.c can build them on a
+ * nothing of the kit, so that dvd/tests/dvd_host.c can build them on a
  * computer and compare what they decode with ffmpeg. */
 #ifndef DVD_H
 #define DVD_H

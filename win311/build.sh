@@ -3,7 +3,7 @@
 #
 # The result is win311/out/: PCEMU.BIN, the emulator (Tiny386 on the
 # SDK's drivers, win311/port), to be loaded at 0x8c010080 by
-# sdk/examples/pcboot (WIN311.BIN on the card); pcemu.elf, the same for
+# win311/pcboot (WIN311.BIN on the card); pcemu.elf, the same for
 # `rnse boot --gdb`; BIOS.ROM and VGABIOS.ROM, SeaBIOS and its VGA BIOS
 # as Tiny386 configures them; and WIN311.BIN, pcboot.  All go on an SD
 # card beside a disk image WIN311.IMG: docs/win311.md.
@@ -15,7 +15,15 @@
 # is built in the container of win311/docker (an x86 GCC).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(dirname "$here")
+# The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
+# container, which sees the git working trees of both).
+sdk=$(cd "${RNSE_SDK:-$here/../../sdk}" && pwd)
+export RNSE_SDK="$sdk"
+mounts() {
+    for d in "$here" "$sdk"; do
+        git -C "$d" rev-parse --show-toplevel 2>/dev/null || echo "$d"
+    done | sort -u | while read -r m; do printf ' -v %s:%s' "$m" "$m"; done
+}
 
 t386_commit=c74cb710942461fa105370bbd2e79f201dcdb3ee
 t386_sha256=373df2c42b6649093046e1ad9679964435dd2418f7c37c1b4167615a9d01439b
@@ -77,15 +85,15 @@ if [ -z "$RNSE_WIN311_INSIDE" ]; then
 
     if [ -n "$RNSE_WIN311_NATIVE" ]; then
         RNSE_WIN311_INSIDE=1 sh "$here/build.sh"
-        (cd "$root/sdk" && ./build.sh 192 pcboot)
+        sh "$sdk/build.sh" 192 "$here/pcboot"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
-        docker run --rm -e RNSE_WIN311_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
+            docker build -q -t rnse-sh4-cross "$sdk/tools/sh4-docker" >&2
+        docker run --rm -e RNSE_WIN311_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -e RNSE_SDK $(mounts) -w "$here" \
             rnse-sh4-cross sh "$here/build.sh"
-        docker run --rm -v "$root":"$root" -w "$root/sdk" rnse-sh4-cross ./build.sh 192 pcboot >/dev/null
+        docker run --rm $(mounts) -w "$sdk" rnse-sh4-cross ./build.sh 192 "$here/pcboot" >/dev/null
     fi
-    cp "$root/sdk/out/pcboot-192.bin" "$out/WIN311.BIN"
+    cp "$sdk/out/pcboot-192.bin" "$out/WIN311.BIN"
 
     # The trailer pcboot checks: "RNSEPCEM", the length before it and
     # its CRC-32 (gzip's own, from the end of its output), big-endian.
@@ -106,7 +114,6 @@ fi
 # ---- Inside: compile and link (sh4-linux-gnu-gcc on the PATH). ------------
 : "${CROSS:=sh4-linux-gnu-}"
 src=$work/src
-sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
@@ -114,7 +121,7 @@ gccinc=$(${CROSS}gcc -print-file-name=include)
 # nothing of the cross compiler's Linux C library.
 common="-g -mb -m4-nofpu -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
 emu="$common ${EMU_OPT:--O2} -w -Werror=implicit-function-declaration -DRNSE -DUSE_FMOPL_n -I$sdk/libc -I$src $EXTRA_CFLAGS"
-port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DRNSE -I$here/port -I$sdk/libc -I$src -I$sdk/include -I$sdk/examples/pcboot $EXTRA_CFLAGS"
+port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DRNSE -I$here/port -I$sdk/libc -I$src -I$sdk/include -I$here/pcboot $EXTRA_CFLAGS"
 sdkflags="$common -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
 
 # Tiny386's machine without what is for other systems (term.c, win32.c,

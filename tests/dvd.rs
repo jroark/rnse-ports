@@ -1,7 +1,7 @@
-//! The DVD player (`sdk/examples/dvd`) on an emulated 192, started in
+//! The DVD player (`dvd/dvd`) on an emulated 192, started in
 //! the loader's place by the boot ROM's stand-in: no firmware needed,
 //! only an SH-4 GCC to build the program and a DVD-Video image, given
-//! as `RNSE_DVD` (`sdk/tests/check-dvd.sh` makes one with ffmpeg,
+//! as `RNSE_DVD` (`dvd/check.sh` makes one with ffmpeg,
 //! dvdauthor and genisoimage, and runs this):
 //!
 //!     RNSE_DVD=out/dvd/ntsc.iso cargo test --release --test dvd -- --nocapture
@@ -24,10 +24,10 @@ fn build() -> Option<Vec<u8>> {
 /// The program built with EXTRA_CFLAGS (read before another test can
 /// build it otherwise).
 fn build_with(extra: &str) -> Option<Vec<u8>> {
-    let sdk = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("sdk");
+    let sdk = std::env::var_os("RNSE_SDK").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../sdk"));
     static BUILD: std::sync::Mutex<()> = std::sync::Mutex::new(());
     let _lock = BUILD.lock().unwrap_or_else(|e| e.into_inner());
-    let out = std::process::Command::new("sh").arg(sdk.join("build.sh")).args(["192", "dvd"])
+    let out = std::process::Command::new("sh").arg(sdk.join("build.sh")).arg("192").arg(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("dvd/dvd"))
         .env("EXTRA_CFLAGS", extra).output().ok()?;
     if !out.status.success() {
         let text = String::from_utf8_lossy(&out.stderr);
@@ -38,7 +38,7 @@ fn build_with(extra: &str) -> Option<Vec<u8>> {
     let program = std::fs::read(sdk.join("out/dvd-192.bin")).unwrap();
     if !extra.is_empty() {
         // sdk/out/dvd-192.bin is what goes on a card: the real one again.
-        let again = std::process::Command::new("sh").arg(sdk.join("build.sh")).args(["192", "dvd"]).output().unwrap();
+        let again = std::process::Command::new("sh").arg(sdk.join("build.sh")).arg("192").arg(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("dvd/dvd")).output().unwrap();
         assert!(again.status.success());
     }
     Some(program)

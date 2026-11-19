@@ -1,6 +1,6 @@
 /* Doom on the RNS-E 192: the game's start, its waits and its end.
  *
- * Started by doomboot (sdk/examples/doomboot) through image_enter, with
+ * Started by doomboot (doom/doomboot) through image_enter, with
  * the WAD in RAM and the way back to the SD loader in the hand-off
  * block (handoff.h).  The SDK's start-up code has run anew: vectors,
  * the 10 ms tick that also strobes the watchdog, the screen as the
