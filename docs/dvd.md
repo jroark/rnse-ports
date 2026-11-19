@@ -189,7 +189,7 @@ has not been run where this was written.
 
 In the emulator, which counts one instruction a cycle (on a unit,
 with the caches set up as here, `h264bench` ran at 92 to 98 % of
-that rate, `docs/android-auto.md`), with the drive answering at once:
+that rate, `sdbridge/docs/android-auto.md`), with the drive answering at once:
 
 | stream | pictures decoded a second | shown |
 |---|---|---|

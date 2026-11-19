@@ -688,7 +688,7 @@ int main(void)
         for (;;)
             keys();
     }
-    /* The caches as the decoders want them (docs/android-auto.md): P1
+    /* The caches as the decoders want them (sdbridge/docs/android-auto.md): P1
      * copied back, no index modes; put back on the way out. */
     cache_setup(CCR_EMODE | CCR_ICE | CCR_OCE | CCR_CB);
     if (video_init(alloc)) {

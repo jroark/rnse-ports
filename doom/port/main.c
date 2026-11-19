@@ -164,7 +164,7 @@ int main(void)
         (void)*(volatile u32 *)odd;
     }
 #endif
-    /* The caches as measured fastest on a unit (docs/android-auto.md):
+    /* The caches as measured fastest on a unit (sdbridge/docs/android-auto.md):
      * stores through P1, where all of the game is, kept in the cache
      * (copy-back) instead of written through, and no index modes.
      * Without it a unit runs this kind of code at half the pace. */
