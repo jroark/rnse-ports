@@ -9,7 +9,7 @@
 # nofrendo (nofrendo/) are beside this file.
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
-cd "${RNSE_SDK:-$here/../../sdk}"
+cd "${RNSE_SDK:-$here/../../rnse-sdk}"
 CROSS=${CROSS:-sh4-linux-gnu-}
 mkdir -p out/nes
 objs=""

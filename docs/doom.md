@@ -1,7 +1,7 @@
 # Doom on the 192
 
 The shareware Doom (1.9), run on the 192 as a program of the SDK's,
-started from an SD card by the SD loader (`sdboot`, [sd-loader.md](../../docs/sd-loader.md)):
+started from an SD card by the SD loader (`sdboot`, [sd-loader.md](https://github.com/jroark/rnse-sdk/blob/main/docs/sd-loader.md)):
 no Linux, no other operating system, the game on the kit's own drivers
 for the screen, the faceplate, the display, the drive and the sound.
 The game is [doomgeneric](https://github.com/ozkl/doomgeneric), a port

@@ -17,7 +17,7 @@ set -e
 here=$(cd "$(dirname "$0")" && pwd)
 # The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
 # container, which sees the git working trees of both).
-sdk=$(cd "${RNSE_SDK:-$here/../../sdk}" && pwd)
+sdk=$(cd "${RNSE_SDK:-$here/../../rnse-sdk}" && pwd)
 export RNSE_SDK="$sdk"
 mounts() {
     for d in "$here" "$sdk"; do

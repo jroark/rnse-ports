@@ -2,7 +2,7 @@
 
 The shareware Quake (1.06 data, the 1.09 engine), run on the 192 as a
 program of the SDK's, started from an SD card by the SD loader
-(`sdboot`, [sd-loader.md](../../docs/sd-loader.md)), the way Doom is
+(`sdboot`, [sd-loader.md](https://github.com/jroark/rnse-sdk/blob/main/docs/sd-loader.md)), the way Doom is
 ([doom.md](doom.md)): no operating system, the game on the kit's own
 drivers for the screen, the faceplate, the display, the card and the
 sound.  The engine is id Software's GPL release of WinQuake (its

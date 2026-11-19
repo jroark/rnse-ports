@@ -24,7 +24,7 @@ fn build() -> Option<Vec<u8>> {
 /// The program built with EXTRA_CFLAGS (read before another test can
 /// build it otherwise).
 fn build_with(extra: &str) -> Option<Vec<u8>> {
-    let sdk = std::env::var_os("RNSE_SDK").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../sdk"));
+    let sdk = std::env::var_os("RNSE_SDK").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../rnse-sdk"));
     static BUILD: std::sync::Mutex<()> = std::sync::Mutex::new(());
     let _lock = BUILD.lock().unwrap_or_else(|e| e.into_inner());
     let out = std::process::Command::new("sh").arg(sdk.join("build.sh")).arg("192").arg(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("dvd/dvd"))

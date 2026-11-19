@@ -83,7 +83,7 @@ cc -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I../sdk/include -Ines/nes nes/tests/protocol.c \
   nes/nes/protocol.c -o /tmp/nes-protocol-test
 /tmp/nes-protocol-test
-PATH="$PWD/../sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
+PATH="$PWD/../rnse-sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
   cargo test --release -p rnse-ports --test disc nes_bare_metal_sd_video_audio -- --nocapture
 ```
 

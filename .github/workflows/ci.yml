@@ -1,0 +1,32 @@
+# Builds what needs only the kit (the launchers, the DVD player, the NES
+# emulator) and the emulator tests.  The games themselves (Doom, Quake,
+# umac, Windows 3.11) are downloaded and built by their build.sh, and the
+# end-to-end tests (tests/disc.rs) need a firmware disc and each game's
+# data, none of which is stored here or in CI: they report success
+# without them, so this run proves the programs build, not that they work.
+name: build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The kit (rnse-sdk)
+        uses: actions/checkout@v4
+        with:
+          repository: jroark/rnse-sdk
+          ref: v0.1.0
+          path: rnse-sdk
+      - name: SH-4 cross compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-sh4-linux-gnu binutils-sh4-linux-gnu
+      - name: Programs built with the kit
+        run: RNSE_SDK=$GITHUB_WORKSPACE/rnse-sdk sh tools/build-launchers.sh
+      - name: Emulator tests (skip without a disc)
+        run: RNSE_SDK=$GITHUB_WORKSPACE/rnse-sdk cargo test --release
