@@ -383,7 +383,7 @@ int main(void)
     screen_palette(1, 255, 255, 255);
     screen_fill(0, 0, screen_width, screen_height, 0);
     screen_text(16, 16, "QUAKE IS STARTING", 1, 2);
-    /* The caches as measured fastest on a unit (docs/android-auto.md):
+    /* The caches as measured fastest on a unit (sdbridge/docs/android-auto.md):
      * stores through P1, where all of the game is, kept in the cache
      * (copy-back) instead of written through, and no index modes. */
     found_ccr = REG32(CCR);

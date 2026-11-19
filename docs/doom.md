@@ -209,7 +209,7 @@ an OPL emulator), which is a step of its own.
 ## Speed and the caches
 
 The game sets the caches as measured fastest on a unit for this kind of
-code (`docs/android-auto.md`): P1, where all of it lives, copy-back
+code (`sdbridge/docs/android-auto.md`): P1, where all of it lives, copy-back
 instead of write-through, and no index modes (CCR 0x80000105, through
 `cache_setup`).  It puts back what it found before every hand-back to
 the loader.  With that setting a unit ran a decoder at 92 to 98 % of
