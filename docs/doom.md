@@ -143,7 +143,7 @@ up, 400x235, 8 bits, a palette of 256 entries of 6 bits a colour (as a
 VGA's).  So each frame goes over as it is, centred (at 40, 17), a word
 at a time (`screen_blit`, new in the kit: four pixels a word with their
 bytes turned round, since the chip is little-endian on a big-endian bus,
-`docs/linux.md`), and Doom's palette, with its gamma, straight into the
+`linux/docs/linux.md`), and Doom's palette, with its gamma, straight into the
 chip's.  One surface: no double buffering, and nothing waits for the
 display's vertical sync.
 
@@ -244,7 +244,7 @@ the end of the load.  The emulator did not show it, also not with
 worked is that `image_enter` strobes the watchdog while it writes the
 operand cache back over the game's room (7.6 MB, 245,000 `ocbp` with
 interrupts masked): an unstrobed purge of RAM had already reset this
-unit once, on Linux's way back (`docs/linux.md`), and the emulator
+unit once, on Linux's way back (`linux/docs/linux.md`), and the emulator
 counts an `ocbp` as one cycle, which a unit evidently does not.  The
 same build also has the kit's exception screen
 (`unexpected`, `sdk/src/common.c`: the exception's code and PC on the
