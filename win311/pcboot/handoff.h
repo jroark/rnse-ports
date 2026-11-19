@@ -1,4 +1,4 @@
-/* What pcboot (sdk/examples/pcboot) leaves for the PC emulator it starts
+/* What pcboot (win311/pcboot) leaves for the PC emulator it starts
  * (win311/): at a fixed address below it, in cached RAM.  See
  * docs/win311.md, "Memory". */
 #ifndef PC_HANDOFF_H

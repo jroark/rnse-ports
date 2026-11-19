@@ -3,7 +3,7 @@
 #
 # The result is umac/out/: MACEMU.BIN, umac (Matt Evans's emulator
 # around Musashi's 68000) on the SDK's drivers, to be loaded at
-# 0x8c010080 by sdk/examples/macboot (MAC.BIN on the card), and
+# 0x8c010080 by umac/macboot (MAC.BIN on the card), and
 # macemu.elf, the same for `rnse boot --gdb`.  Both go on an SD card
 # with MAC.BIN, a Mac Plus ROM (MACPLUS.ROM) and a disk image (MAC.DSK):
 # docs/umac.md.
@@ -17,7 +17,15 @@
 # host's cc (HOSTCC).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(dirname "$here")
+# The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
+# container, which sees the git working trees of both).
+sdk=$(cd "${RNSE_SDK:-$here/../../sdk}" && pwd)
+export RNSE_SDK="$sdk"
+mounts() {
+    for d in "$here" "$sdk"; do
+        git -C "$d" rev-parse --show-toplevel 2>/dev/null || echo "$d"
+    done | sort -u | while read -r m; do printf ' -v %s:%s' "$m" "$m"; done
+}
 
 umac_commit=606f7f75fee8525d4735a0771bf521007115285e
 umac_sha256=2904d80d75f734626d77ab4bc85fd81e9a4ffd02bf9813e643e2f5903d6ab642
@@ -79,8 +87,8 @@ if [ -z "$RNSE_UMAC_INSIDE" ]; then
         RNSE_UMAC_INSIDE=1 sh "$here/build.sh"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
-        docker run --rm -e RNSE_UMAC_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
+            docker build -q -t rnse-sh4-cross "$sdk/tools/sh4-docker" >&2
+        docker run --rm -e RNSE_UMAC_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -e RNSE_SDK $(mounts) -w "$here" \
             rnse-sh4-cross sh "$here/build.sh"
     fi
 
@@ -102,7 +110,6 @@ fi
 
 # ---- Inside: compile and link (sh4-linux-gnu-gcc on the PATH). ------------
 : "${CROSS:=sh4-linux-gnu-}"
-sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
@@ -111,7 +118,7 @@ gccinc=$(${CROSS}gcc -print-file-name=include)
 common="-g -mb -m4-nofpu -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
 inc="-I$sdk/libc -I$src/include -I$src/external/Musashi -I$src/gen $macflags"
 engine="$common -O2 -w -Werror=implicit-function-declaration $inc $EXTRA_CFLAGS"
-port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration $inc -I$here/port -I$sdk/include -I$sdk/examples/macboot $EXTRA_CFLAGS"
+port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration $inc -I$here/port -I$sdk/include -I$here/macboot $EXTRA_CFLAGS"
 libc="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -I$sdk/libc -I$sdk/include $EXTRA_CFLAGS"
 sdkflags="$common -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
 

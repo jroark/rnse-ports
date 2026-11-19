@@ -1,15 +1,17 @@
 #!/bin/sh
-# The DVD player's tests (sdk/examples/dvd): its decoders built for this
+# The DVD player's tests (dvd/dvd): its decoders built for this
 # computer and compared with ffmpeg, then the player itself on the
 # emulated 192 with test discs.  Needs ffmpeg, dvdauthor and
 # genisoimage (apt install ffmpeg dvdauthor genisoimage), and an SH-4
 # GCC for the emulator part (see CLAUDE.md).  Everything it makes is
-# synthetic (test patterns and tones) and goes to out/dvd.
+# synthetic (test patterns and tones) and goes to out/dvd (of ports/).
+# The kit is RNSE_SDK, or rnse's sdk/ beside ports/.
 #
-#   sh sdk/tests/check-dvd.sh          all of it
-#   sh sdk/tests/check-dvd.sh host     the decoders only
+#   sh dvd/check.sh          all of it
+#   sh dvd/check.sh host     the decoders only
 set -eu
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/.."
+sdk=$(cd "${RNSE_SDK:-../sdk}" && pwd)
 o=out/dvd
 mkdir -p "$o"
 # (The DVD muxer complains of its buffer model at every packet: quiet.)
@@ -76,9 +78,9 @@ open(sys.argv[2], 'wb').write(d)" "$o/ntsc.iso" "$o/udf.iso"
     done
 fi
 
-${CC:-cc} -std=gnu99 -O2 -Wall -Wextra -Werror -Isdk/include -o "$o/dvd_host" sdk/tests/dvd_host.c \
-    sdk/examples/dvd/video.c sdk/examples/dvd/ac3.c sdk/examples/dvd/mpa.c sdk/examples/dvd/disc.c \
-    sdk/examples/dvd/stream.c -lm
+${CC:-cc} -std=gnu99 -O2 -Wall -Wextra -Werror -I"$sdk/include" -o "$o/dvd_host" dvd/tests/dvd_host.c \
+    dvd/dvd/video.c dvd/dvd/ac3.c dvd/dvd/mpa.c dvd/dvd/disc.c \
+    dvd/dvd/stream.c -lm
 t="$o/dvd_host"
 for f in ntsc pal surround; do
     $t video "$o/$f.m2v" "$o/$f.yuv" full
@@ -95,4 +97,4 @@ $t disc "$o/ntsc.iso"
 $t disc "$o/udf.iso"
 $t disc "$o/pal.iso"
 [ "${1:-}" = host ] && exit 0
-RNSE_DVD="$o/ntsc.iso" cargo test --release --test dvd
+RNSE_DVD="$PWD/$o/ntsc.iso" cargo test --release -p rnse-ports --test dvd

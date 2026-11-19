@@ -1,6 +1,6 @@
 /* umac on the RNS-E 192: a Mac Plus, its start, its run and its end.
  *
- * Started by macboot (sdk/examples/macboot) through image_enter, with
+ * Started by macboot (umac/macboot) through image_enter, with
  * the Mac Plus ROM and the disk image in RAM and the way back to the SD
  * loader in the hand-off block (handoff.h).  The SDK's start-up code
  * has run anew: vectors, the 10 ms tick that also strobes the watchdog,

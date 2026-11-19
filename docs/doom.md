@@ -38,7 +38,7 @@ What is ours (MIT, as the rest):
 
 | file | what |
 |------|------|
-| `sdk/examples/doomboot/` | the first stage, `DOOM.BIN`, and `handoff.h`, what it leaves the game |
+| `doom/doomboot/` | the first stage, `DOOM.BIN`, and `handoff.h`, what it leaves the game |
 | `doom/port/main.c` | the start, the waits (`port_idle`), the clock, the end |
 | `doom/port/i_video.c` | the picture and the palette |
 | `doom/port/i_input.c` | the faceplate as keyboard and mouse |
@@ -77,13 +77,13 @@ The game's messages come out on the debug serial port (the emulator
 prints them). The end-to-end test:
 
     PATH=$PWD/sdk/tools/sh4-docker:$PATH RNSE_DISC=stock.iso RNSE_DOOM=$PWD/doom/out \
-        cargo test --release --test disc doom_runs_from_an_sd_card
+        cargo test --release -p rnse-ports --test disc doom_runs_from_an_sd_card
 
 ## Two stages
 
 `sdboot` loads a program of at most 0x1c000 bytes into the loader's
 place (0x8df00000).  The game is 368 KB of code and data, and wants its
-4 MB WAD in memory.  So `DOOM.BIN` (`sdk/examples/doomboot`, 28 KB) is a
+4 MB WAD in memory.  So `DOOM.BIN` (`doom/doomboot`, 28 KB) is a
 first stage, as `linuxboot` is for Linux:
 
 1. It takes the faceplate controller over as `sdboot` left it, lit

@@ -3,7 +3,7 @@
 #
 # The result is quake/out/: QUAKEGAM.BIN, the game (id Software's
 # WinQuake, its software renderer, on the SDK's drivers), to be loaded at
-# 0x8c010080 by sdk/examples/quakeboot (QUAKE.BIN on the card),
+# 0x8c010080 by quake/quakeboot (QUAKE.BIN on the card),
 # quakegame.elf, the same for `rnse boot --gdb`, and PAK0.PAK, the
 # shareware data, which the game reads from the card as it needs it.
 # All three go on an SD card beside QUAKE.BIN: docs/quake.md.
@@ -17,7 +17,15 @@
 # when RNSE_QUAKE_NATIVE=1, else the container of sdk/tools/sh4-docker.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(dirname "$here")
+# The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
+# container, which sees the git working trees of both).
+sdk=$(cd "${RNSE_SDK:-$here/../../sdk}" && pwd)
+export RNSE_SDK="$sdk"
+mounts() {
+    for d in "$here" "$sdk"; do
+        git -C "$d" rev-parse --show-toplevel 2>/dev/null || echo "$d"
+    done | sort -u | while read -r m; do printf ' -v %s:%s' "$m" "$m"; done
+}
 
 q_commit=bf4ac424ce754894ac8f1dae6a3981954bc9852d
 q_sha256=fb98e8c99740123f3fac830c1387584ec1f684db8908cbf42b7187d06d399013
@@ -84,8 +92,8 @@ if [ -z "$RNSE_QUAKE_INSIDE" ]; then
         RNSE_QUAKE_INSIDE=1 sh "$here/build.sh"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
-        docker run --rm -e RNSE_QUAKE_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
+            docker build -q -t rnse-sh4-cross "$sdk/tools/sh4-docker" >&2
+        docker run --rm -e RNSE_QUAKE_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -e RNSE_SDK $(mounts) -w "$here" \
             rnse-sh4-cross sh "$here/build.sh"
     fi
 
@@ -109,7 +117,6 @@ fi
 # ---- Inside: compile and link (sh4-linux-gnu-gcc on the PATH). ------------
 : "${CROSS:=sh4-linux-gnu-}"
 src=$work/WinQuake
-sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
@@ -125,9 +132,9 @@ gccinc=$(${CROSS}gcc -print-file-name=include)
 # handler uses its registers and none has to save them.
 common="-g -mb -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
 fpu="-m4 -mdiv=call-table -fsingle-precision-constant -fno-math-errno -fcommon"
-libc="-I$here/port/libc -I$root/sdk/libc"
+libc="-I$here/port/libc -I$sdk/libc"
 engine="$common $fpu -O2 -w -Werror=implicit-function-declaration -DRNSE $libc -I$src $EXTRA_CFLAGS"
-port="$common $fpu -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DRNSE -I$here/port $libc -I$src -I$sdk/include -I$sdk/examples/quakeboot $EXTRA_CFLAGS"
+port="$common $fpu -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DRNSE -I$here/port $libc -I$src -I$sdk/include -I$here/quakeboot $EXTRA_CFLAGS"
 sdkflags="$common -m4-nofpu -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
 
 # The engine: WinQuake's software renderer as Makefile.linuxi386 lists it,
@@ -154,7 +161,7 @@ add() { # flags source object
 }
 for f in $engine_files; do add "$engine" "$src/$f.c" "$obj/e-$f.o"; done
 for f in $sdk_files; do add "$sdkflags" "$sdk/src/$f" "$obj/s-${f%.*}.o"; done
-for f in $libc_files; do add "$port" "$root/sdk/libc/$f.c" "$obj/d-$f.o"; done
+for f in $libc_files; do add "$port" "$sdk/libc/$f.c" "$obj/d-$f.o"; done
 for f in "$here"/port/*.c "$here"/port/libc/*.c "$here"/port/libc/*.S; do
     [ -f "$f" ] || continue
     b=$(basename "$f")

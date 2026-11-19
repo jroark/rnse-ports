@@ -10,10 +10,10 @@ physical unit require testing; mapper presence is not a compatibility guarantee.
 ## Build and run
 
 ```
-PATH="$PWD/sdk/tools/sh4-docker:$PATH" sdk/nes-build.sh
+PATH="$PWD/sdk/tools/sh4-docker:$PATH" nes/build.sh
 ```
 
-Alternatively run `sdk/nes-build.sh` in the `rnse-sh4-cross` container, mounting
+Alternatively run `nes/build.sh` in the `rnse-sh4-cross` container, mounting
 this checkout and setting its SDK directory as the working directory.
 Copy `sdk/out/nes/RNSE.BIN` and `sdk/out/nes/NESCORE.BIN` plus your ROM files
 to a supported FAT card's root. To preserve an existing RNSE.BIN, name the new
@@ -76,17 +76,21 @@ Nofrendo's APU uses Q8 accumulators; CPU word reads are bytewise for SH-4 alignm
 
 ## Verification
 
+From `ports/` (the kit beside it, as in rnse):
+
 ```
 cc -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -Isdk/include -Isdk/examples/nes tests/nes/protocol.c \
-  sdk/examples/nes/protocol.c -o /tmp/nes-protocol-test
+  -I../sdk/include -Ines/nes nes/tests/protocol.c \
+  nes/nes/protocol.c -o /tmp/nes-protocol-test
 /tmp/nes-protocol-test
-PATH="$PWD/sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
-  cargo test --release --test disc nes_bare_metal_sd_video_audio -- --nocapture
+PATH="$PWD/../sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \
+  cargo test --release -p rnse-ports --test disc nes_bare_metal_sd_video_audio -- --nocapture
 ```
 
-Run `python3 tools/package-nes.py` after building both processors to assemble
-`out/nes-release/`, including corresponding source, CAD archive, and SHA256SUMS.
+Run `python3 nes/package.py` after `nes/build.sh` to assemble `out/nes-release/`
+(the payloads, nofrendo's licences, the corresponding source and SHA256SUMS).
+The adapter's firmware and CAD archive are packaged by rnse's
+`hardware/nes-can/package.py` (rnse-hardware).
 
 The integration test generates its own homebrew cartridge. Firmware-backed tests
 need the local firmware image and cross-compiler; a run without RNSE_DISC skips

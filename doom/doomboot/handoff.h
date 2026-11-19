@@ -1,4 +1,4 @@
-/* What doomboot (sdk/examples/doomboot) leaves for the game it starts
+/* What doomboot (doom/doomboot) leaves for the game it starts
  * (doom/): at a fixed address below the game, in cached RAM.  See
  * docs/doom.md, "Memory". */
 #ifndef DOOM_HANDOFF_H

@@ -3,7 +3,7 @@
 #
 # The result is doom/out/: DOOMGAME.BIN, the game (doomgeneric, a port
 # of Chocolate Doom, on the SDK's drivers), to be loaded at 0x8c010080
-# by sdk/examples/doomboot (DOOM.BIN on the card), doomgame.elf, the
+# by doom/doomboot (DOOM.BIN on the card), doomgame.elf, the
 # same for `rnse boot --gdb`, and DOOM1.WAD, the shareware IWAD.  All
 # three go on an SD card beside DOOM.BIN: docs/doom.md.
 #
@@ -15,7 +15,15 @@
 # sdk/tools/sh4-docker.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(dirname "$here")
+# The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
+# container, which sees the git working trees of both).
+sdk=$(cd "${RNSE_SDK:-$here/../../sdk}" && pwd)
+export RNSE_SDK="$sdk"
+mounts() {
+    for d in "$here" "$sdk"; do
+        git -C "$d" rev-parse --show-toplevel 2>/dev/null || echo "$d"
+    done | sort -u | while read -r m; do printf ' -v %s:%s' "$m" "$m"; done
+}
 
 dg_commit=e257a09527062bfb986b6e5e0780839b6cbd5b71
 dg_sha256=26f8f60daa6c6e4d3c01e5eac9fb700d592dede803d13ac848154ff356b2a2e7
@@ -67,8 +75,8 @@ if [ -z "$RNSE_DOOM_INSIDE" ]; then
         RNSE_DOOM_INSIDE=1 sh "$here/build.sh"
     else
         docker image inspect rnse-sh4-cross >/dev/null 2>&1 ||
-            docker build -q -t rnse-sh4-cross "$root/sdk/tools/sh4-docker" >&2
-        docker run --rm -e RNSE_DOOM_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -v "$root":"$root" -w "$root" \
+            docker build -q -t rnse-sh4-cross "$sdk/tools/sh4-docker" >&2
+        docker run --rm -e RNSE_DOOM_INSIDE=1 -e JOBS -e EXTRA_CFLAGS -e RNSE_SDK $(mounts) -w "$here" \
             rnse-sh4-cross sh "$here/build.sh"
     fi
 
@@ -92,15 +100,14 @@ fi
 # ---- Inside: compile and link (sh4-linux-gnu-gcc on the PATH). ------------
 : "${CROSS:=sh4-linux-gnu-}"
 src=$work/doomgeneric
-sdk=$root/sdk
 obj=$work/obj
 mkdir -p "$obj"
 gccinc=$(${CROSS}gcc -print-file-name=include)
 # The game's C library (sdk/libc) and the compiler's own headers,
 # and nothing of the cross compiler's Linux C library.
 common="-g -mb -m4-nofpu -ffreestanding -fno-pic -fno-stack-protector -fno-strict-aliasing -nostdinc -isystem $gccinc"
-engine="$common -O2 -w -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$root/sdk/libc -I$src $EXTRA_CFLAGS"
-port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$here/port -I$root/sdk/libc -I$src -I$sdk/include -I$sdk/examples/doomboot $EXTRA_CFLAGS"
+engine="$common -O2 -w -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$sdk/libc -I$src $EXTRA_CFLAGS"
+port="$common -O2 -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=implicit-function-declaration -DFEATURE_SOUND -DRNSE -I$here/port -I$sdk/libc -I$src -I$sdk/include -I$here/doomboot $EXTRA_CFLAGS"
 sdkflags="$common -Os -fno-builtin -Wall -Wextra -I$sdk/include $EXTRA_CFLAGS"
 
 # The engine: doomgeneric's list, without what is ours (doom/port) or for
@@ -125,7 +132,7 @@ add() { # flags source object
 }
 for f in $engine_files; do add "$engine" "$src/$f.c" "$obj/e-$f.o"; done
 for f in $sdk_files; do add "$sdkflags" "$sdk/src/$f" "$obj/s-${f%.*}.o"; done
-for f in "$here"/port/*.c "$root"/sdk/libc/*.c; do
+for f in "$here"/port/*.c "$sdk"/libc/*.c; do
     add "$port" "$f" "$obj/p-$(basename "$f" .c).o"
 done
 # One compiler a line, several at once.

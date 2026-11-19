@@ -1,7 +1,7 @@
 /* A PC on the RNS-E 192 (Tiny386), for Windows 3.11: the start, the
  * loop, the screen, the controls and the end.
  *
- * Started by pcboot (sdk/examples/pcboot, WIN311.BIN on the card)
+ * Started by pcboot (win311/pcboot, WIN311.BIN on the card)
  * through image_enter, with the way back to the SD loader in the
  * hand-off block (handoff.h).  It reads the BIOS (BIOS.ROM, VGABIOS.ROM)
  * and opens the disk image (WIN311.IMG) on the card itself; the disk is
