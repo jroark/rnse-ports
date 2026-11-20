@@ -76,11 +76,11 @@ Nofrendo's APU uses Q8 accumulators; CPU word reads are bytewise for SH-4 alignm
 
 ## Verification
 
-From `ports/` (the kit beside it, as in rnse):
+From the repository's root (rnse-sdk beside it):
 
 ```
 cc -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I../sdk/include -Ines/nes nes/tests/protocol.c \
+  -I../rnse-sdk/include -Ines/nes nes/tests/protocol.c \
   nes/nes/protocol.c -o /tmp/nes-protocol-test
 /tmp/nes-protocol-test
 PATH="$PWD/../rnse-sdk/tools/sh4-docker:$PATH" RNSE_DISC=/path/to/stock.iso \

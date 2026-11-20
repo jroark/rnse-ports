@@ -4,14 +4,14 @@
 # emulated 192 with test discs.  Needs ffmpeg, dvdauthor and
 # genisoimage (apt install ffmpeg dvdauthor genisoimage), and an SH-4
 # GCC for the emulator part (see CLAUDE.md).  Everything it makes is
-# synthetic (test patterns and tones) and goes to out/dvd (of ports/).
-# The kit is RNSE_SDK, or rnse's sdk/ beside ports/.
+# synthetic (test patterns and tones) and goes to out/dvd.
+# The kit is RNSE_SDK, or rnse-sdk beside this repository.
 #
 #   sh dvd/check.sh          all of it
 #   sh dvd/check.sh host     the decoders only
 set -eu
 cd "$(dirname "$0")/.."
-sdk=$(cd "${RNSE_SDK:-../sdk}" && pwd)
+sdk=$(cd "${RNSE_SDK:-../rnse-sdk}" && pwd)
 o=out/dvd
 mkdir -p "$o"
 # (The DVD muxer complains of its buffer model at every packet: quiet.)

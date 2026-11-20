@@ -5,7 +5,7 @@
 #
 #   sh nes/build.sh
 #
-# The kit is RNSE_SDK, or rnse's sdk/ beside ports/; the game (nes/) and
+# The kit is RNSE_SDK, or rnse-sdk beside this repository; the game (nes/) and
 # nofrendo (nofrendo/) are beside this file.
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
