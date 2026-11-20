@@ -12,7 +12,8 @@
 //! `RNSE_MAC_DISK`, `RNSE_WIN311`, `RNSE_DVD`, and for the NES `nes/build.sh`
 //! run first (and `RNSE_NES_ROM` for a ROM of one's own).  Without them
 //! they return early and pass, which proves nothing.  The kit is
-//! `RNSE_SDK`, or rnse's `sdk/` beside this directory.  The helpers are
+//! `RNSE_SDK`, or a checkout of rnse-sdk beside this
+//! repository (`../rnse-sdk`).  The helpers are
 //! copies of rnse's `tests/disc.rs`, taking a program of this repository
 //! by path.
 
@@ -20,7 +21,7 @@ use rnse::fw;
 use rnse::machine::Machine;
 use rnse::sh4::cpu::Stop;
 
-/// The kit: RNSE_SDK, or rnse's sdk/ beside this directory.
+/// The kit: RNSE_SDK, or ../rnse-sdk.
 fn kit() -> std::path::PathBuf {
     std::env::var_os("RNSE_SDK").map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../rnse-sdk"))

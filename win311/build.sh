@@ -15,7 +15,7 @@
 # is built in the container of win311/docker (an x86 GCC).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-# The kit: RNSE_SDK, or rnse's sdk/ beside ports/ (passed on to the
+# The kit: RNSE_SDK, or rnse-sdk beside this repository (passed on to the
 # container, which sees the git working trees of both).
 sdk=$(cd "${RNSE_SDK:-$here/../../rnse-sdk}" && pwd)
 export RNSE_SDK="$sdk"

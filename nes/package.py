@@ -8,7 +8,7 @@ kit's out/nes/, this port's documentation as README.md, nofrendo's
 licences, nes-source.tar.gz (the corresponding source: this port and the
 parts of the kit it is built from) and SHA256SUMS.  The adapter board's
 release is hardware/nes-can/package.py's (rnse-hardware).  The kit is
-RNSE_SDK, or rnse's sdk/ beside ports/.
+RNSE_SDK, or rnse-sdk beside this repository.
 """
 from pathlib import Path
 import hashlib
